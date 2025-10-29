@@ -1,16 +1,25 @@
 import express from "express";
+import dotenv from "dotenv";
 import cors from "cors";
+import clientesRoutes from "./routes/clientes.routes.js";
+import inquilinosRoutes from "./routes/inquilinos.routes.js";
+
+dotenv.config();
 
 const app = express();
-const PORT = 3000;
-
-app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.send("Servidor funcionando correctamente");
-});
+app.use(cors({
+    origin: process.env.CLIENT_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
+
+app.use('/api/clientes', clientesRoutes);
+app.use('/api/inquilinos', inquilinosRoutes);
+
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`Servidor escuchando en http://localhost:${PORT}`);
+    console.log(`Servidor en http://localhost:${PORT}`);
 });
