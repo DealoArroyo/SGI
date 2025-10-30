@@ -23,17 +23,18 @@ export const obtenerUsuarios = async (req, res) => {
 
 export const crearUsuario = async (req, res) => {
     try {
-        const { nombre, correo, contrasena, id_inquilino, id_rol } = req.body;
+        const { nombre, correo, contrasena, id_rol } = req.body;
+        const id_inquilino = req.id_inquilino;
         const hashed = await bcrypt.hash(contrasena, 10);
 
         const nuevoUsuario = await pool.query(
             `INSERT INTO usuarios (nombre, correo, contrasena, id_inquilino, id_rol) 
-             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+             VALUES ($1, $2, $3, $4, $5) RETURNING id, nombre, correo, id_inquilino, id_rol`,
             [nombre, correo, hashed, id_inquilino, id_rol]
         );
 
         res.status(201).json({
-            mensaje: "Usuario creado y asociado correctamente",
+            mensaje: "Usuario creado y asociado al inquilino actual",
             usuario: nuevoUsuario.rows[0],
         });
     } catch (error) {
@@ -50,6 +51,7 @@ export const obtenerUsuariosDeInquilino = async (req, res) => {
             FROM usuarios u
             JOIN roles r ON u.id_rol = r.id
             WHERE u.id_inquilino = $1
+            ORDER BY u.id ASC;
         `, [id_inquilino]);
 
         res.json(result.rows);
