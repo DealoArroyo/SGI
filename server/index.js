@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import clientesRoutes from "./routes/clientes.routes.js";
 import inquilinosRoutes from "./routes/inquilinos.routes.js";
+import inquilinosClientesRoutes from "./routes/inquilinos_clientes.routes.js";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(cors({
 
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/inquilinos', inquilinosRoutes);
+app.use('/api/inquilinosClientes', inquilinosClientesRoutes);
 
 const PORT = process.env.PORT || 3000;
 
