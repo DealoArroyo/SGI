@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import clientesRoutes from "./routes/clientes.routes.js";
 import inquilinosRoutes from "./routes/inquilinos.routes.js";
 import inquilinosClientesRoutes from "./routes/inquilinos_clientes.routes.js";
@@ -11,6 +12,7 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(cors({
     origin: process.env.CLIENT_URL,

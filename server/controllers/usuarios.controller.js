@@ -54,7 +54,10 @@ export const obtenerUsuariosDeInquilino = async (req, res) => {
             ORDER BY u.id ASC;
         `, [id_inquilino]);
 
-        res.json(result.rows);
+        res.json({
+            usuarios: result.rows
+        });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

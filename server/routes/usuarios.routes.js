@@ -6,8 +6,20 @@ import { verificarInquilino } from "../middlewares/inquilino.middleware.js";
 
 const router = Router();
 
-router.get("/", authMiddleware, verificarInquilino, obtenerUsuariosDeInquilino);
+router.post(
+    "/login", 
+    authMiddleware, 
+    verificarInquilino, 
+    verificarRol([2]), 
+    crearUsuario
+);
 
-router.post("/", authMiddleware, verificarInquilino, verificarRol([2]), crearUsuario);
+router.get(
+    "/usuarios/inquilino", 
+    authMiddleware,
+    verificarInquilino,
+    obtenerUsuariosDeInquilino
+);
+
 
 export default router;

@@ -7,9 +7,14 @@ export const login = async (req, res) => {
         const { correo, contrasena } = req.body;
 
         const result = await pool.query(`
-            SELECT *
-            FROM usuarios
-            WHERE correo = $1
+            SELECT 
+                u.*,
+                r.nombre AS nombre_rol,
+                i.nombre AS nombre_inquilino
+            FROM usuarios u
+            JOIN roles r ON r.id = u.id_rol
+            LEFT JOIN inquilinos i ON i.id = u.id_inquilino
+            WHERE u.correo = $1
         `, [correo]);
 
         const usuario = result.rows[0];
@@ -21,25 +26,34 @@ export const login = async (req, res) => {
 
         const token = jwt.sign(
             {
-                id_usuario: usuario.id,
-                id_inquilino: usuario.id_inquilino,
-                rol: usuario.id_rol,
+                id: usuario.id,
+                nombre: usuario.nombre,
+                correo: usuario.correo,
+                inquilino: usuario.nombre_inquilino,
+                rol: usuario.nombre_rol,
             },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
 
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "Lax",
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
         res.json({
             mensaje: "Inicio de sesión exitoso",
-            token,
             usuario: {
                 id: usuario.id,
                 nombre: usuario.nombre,
                 correo: usuario.correo,
                 id_inquilino: usuario.id_inquilino,
-                id_rol: usuario.id_rol,
-            },
+                rol: usuario.nombre_rol,
+            }
         });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

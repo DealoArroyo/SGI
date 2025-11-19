@@ -1,19 +1,26 @@
-import { useEffect, useState } from "react";
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import LoginPage from "./pages/loginPage.jsx";
+import Dashboard from './pages/dashboardPage.jsx';
+import PrivateRoute from './components/privateRoute.jsx';
 
 function App() {
-  const [mensaje, setMensaje] = useState("");
-
-  useEffect(() => {
-    fetch("http://localhost:3000/")
-      .then((res) => res.text())
-      .then((data) => setMensaje(data))
-  }, []);
-
   return (
-    <div>
-      <h1>Cliente con React</h1>
-      <p>{mensaje}</p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path='/login' element={<LoginPage />} />
+        
+        <Route 
+          path='/dashboard' 
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          } />
+        
+        <Route path='/' element={<LoginPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
