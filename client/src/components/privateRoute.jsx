@@ -6,7 +6,7 @@ export default function PrivateRoute({ children }) {
   const [isAuth, setIsAuth] = useState(null); // null = cargando
 
   useEffect(() => {
-    api.get("/perfil")
+    api.get("/auth/perfil")
       .then(() => setIsAuth(true))  // usuario válido
       .catch(() => setIsAuth(false)); // token no válido o no existe
   }, []);

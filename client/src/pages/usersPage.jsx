@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Table } from "antd";
 import api from "../api";
+import ButtonDrawer from "../components/buttonDrawer.jsx";
 
 export default function UsuariosDelInquilino() {
   const [usuarios, setUsuarios] = useState([]);
@@ -8,10 +9,10 @@ export default function UsuariosDelInquilino() {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const res = await api.get("/usuarios/inquilino", {
+        const res = await api.get("http://localhost:3000/api/usuarios/inquilino", {
           withCredentials: true
         });
-        setUsuarios(res.data.usuarios);
+        setUsuarios(res.data);
       } catch (error) {
         console.error("Error obteniendo usuarios:", error);
       }
@@ -21,17 +22,19 @@ export default function UsuariosDelInquilino() {
   }, []);
 
   const columns = [
-    { title: "ID", dataIndex: "id" },
     { title: "Nombre", dataIndex: "nombre" },
     { title: "Correo", dataIndex: "correo" },
     { title: "Rol", dataIndex: "rol" }
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={usuarios}
-      rowKey="id"
-    />
+    <div>
+      <ButtonDrawer />
+      <Table
+        columns={columns}
+        dataSource={usuarios}
+        rowKey="id"
+      />
+    </div>
   );
 }

@@ -8,7 +8,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/perfil")
+    api.get("/auth/perfil")
       .then((res) => {
         setUser(res.data.user);
       })

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ProductOutlined,
   TruckOutlined,
@@ -15,7 +15,6 @@ import Pedidos from '../pages/ordersPage.jsx';
 import Usuarios from '../pages/usersPage.jsx';
 import Configuracion from '../pages/settingsPage.jsx';
 import Ventas from '../pages/salesPage.jsx';
-
 import api from "../api";
 import { useNavigate } from "react-router-dom";
 
@@ -25,24 +24,30 @@ function getItem(label, key, icon, children) {
   return { key, icon, children, label };
 }
 
-const items = [
-  getItem('Dashboard', '1', <PieChartOutlined style={{ color: 'green' }} />),
-  getItem('Productos', '2', <ProductOutlined style={{ color: '#874d00' }} />),
-  getItem('Inventario', '3', <BookOutlined style={{ color: '#9254de' }} />),
-  getItem('Pedidos', '4', <TruckOutlined style={{ color: '#13c2c2' }} />),
-  getItem('Usuarios', '5', <UsergroupAddOutlined style={{ color: '#1890ff' }} />),
-  getItem('Configuración', '6', <SettingOutlined style={{ color: '#f0f0f0' }} />),
-  getItem('Cerrar sesión', '7', <LogoutOutlined style={{ color: 'red' }} />),
-];
-
 const MenuUsuario = () => {
   const [selectedView, setSelectedView] = useState("1");
   const [collapsed, setCollapsed] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const { data } = await api.get("/auth/perfil", { withCredentials: true });
+      console.log("PERFIL:", data);
+      setUser(data.user); // <--- AQUÍ EL FIX REAL
+    } catch (error) {
+      console.error("Error obteniendo perfil:", error);
+    }
+  };
+  fetchUser();
+}, []);
+
+
 
   const handleMenuClick = async (e) => {
     if (e.key === "7") {
@@ -50,12 +55,10 @@ const MenuUsuario = () => {
         await api.post("/logout", {}, { withCredentials: true });
       } catch (error) {
         console.error("Error cerrando sesión:", error);
-      } 
-
+      }
       navigate("/login");
-      return; 
+      return;
     }
-
     setSelectedView(e.key);
   };
 
@@ -64,11 +67,29 @@ const MenuUsuario = () => {
       case '2': return <Productos />;
       case '3': return <Inventario />;
       case '4': return <Pedidos />;
-      case '5': return <Usuarios />;
+      case '5':
+        return user?.rol === "Administrador"
+          ? <Usuarios />
+        : <div>No autorizado</div>;
+
       case '6': return <Configuracion />;
       default: return <Ventas />;
     }
   };
+
+  const menuItems = [
+    getItem('Dashboard', '1', <PieChartOutlined />),
+    getItem('Productos', '2', <ProductOutlined />),
+    getItem('Inventario', '3', <BookOutlined />),
+    getItem('Pedidos', '4', <TruckOutlined />),
+
+    ...(user?.rol === "Administrador"
+  ? [getItem('Usuarios', '5', <UsergroupAddOutlined />)]
+  : []),
+
+    getItem('Configuración', '6', <SettingOutlined />),
+    getItem('Cerrar sesión', '7', <LogoutOutlined style={{ color: 'red' }} />),
+  ];
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -77,8 +98,8 @@ const MenuUsuario = () => {
           theme="dark"
           defaultSelectedKeys={['1']}
           mode="inline"
-          items={items}
-          onClick={handleMenuClick} 
+          items={menuItems}
+          onClick={handleMenuClick}
         />
       </Sider>
 

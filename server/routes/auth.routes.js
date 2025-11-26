@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { login } from "../controllers/auth.controller.js";
-import { authMiddlewareCookie } from "../middlewares/auth.cookie.js";
+import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 router.post("/login", login);
-router.get("/perfil", authMiddlewareCookie, (req, res) => {
+
+router.get("/perfil", authMiddleware, (req, res) => {
     res.json({ user: req.user });
 });
 

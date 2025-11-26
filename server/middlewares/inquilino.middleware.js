@@ -1,15 +1,14 @@
 export const verificarInquilino = (req, res, next) => {
     try {
-        const idInquilinoToken = req.user.id_inquilino;
-        const idInquilinoBody = req.body.id_inquilino || req.params.id_inquilino;
-
-        if (idInquilinoBody && Number(idInquilinoBody) !== Number(idInquilinoToken)) {
-            return res.json({
-                error: "No tienes permiso para acceder a otro inquilino"
+        if (!req.user?.id_inquilino) {
+            return res.status(403).json({
+                error: "El usuario no está asociado a ningún inquilino"
             });
         }
 
-        req.id_inquilino = idInquilinoToken;
+        // Siempre tomamos el inquilino solo del token
+        req.id_inquilino = req.user.id_inquilino;
+
         next();
     } catch (error) {
         res.status(500).json({ error: "Error verificando inquilino" });
