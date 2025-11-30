@@ -3,7 +3,7 @@ import axios from 'axios';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Drawer, Form, Input, Row, Select, Space, message } from 'antd';
 
-const ButtonDrawer = () => {
+const ButtonDrawer = ({ onUserAdded }) => {
   const [open, setOpen] = useState(false);
   const [roles, setRoles] = useState([]);
 
@@ -46,11 +46,13 @@ const ButtonDrawer = () => {
         withCredentials: true
       });
 
-      message.success("Usuario agregado correctamente");
+      const newUser = res.data.usuario;
+
+      onUserAdded(newUser);
+
       onClose(); // ← cierra el drawer y limpia
     } catch (error) {
       console.error(error);
-      message.error("Error al agregar usuario");
     }
   };
 

@@ -1,10 +1,25 @@
 import { useState, useEffect } from "react";
-import { Table } from "antd";
+import { message, Table, Divider } from "antd";
 import api from "../api";
 import ButtonDrawer from "../components/buttonDrawer.jsx";
 
 export default function UsuariosDelInquilino() {
   const [usuarios, setUsuarios] = useState([]);
+  const [messageApi, contextHolder] = message.useMessage();
+
+  const success = () => {
+    messageApi.open({
+      type: "success",
+      content: "Usuario agregado correctamente"
+    });
+  };
+
+  const warning = () => {
+    messageApi.open({
+      type: "error",
+      content: "El usuario no se pudo agregar"
+    });
+  };
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -21,6 +36,16 @@ export default function UsuariosDelInquilino() {
     fetchUsuarios();
   }, []);
 
+  const handleUserAdded = (newUser) => {
+    try {
+      setUsuarios((prev) => [...prev, newUser]);
+      success();
+    } catch (error) {
+      console.error("Error al crear usuario", error);
+      warning();
+    }
+  }
+
   const columns = [
     { title: "Nombre", dataIndex: "nombre" },
     { title: "Correo", dataIndex: "correo" },
@@ -29,7 +54,11 @@ export default function UsuariosDelInquilino() {
 
   return (
     <div>
-      <ButtonDrawer />
+      {contextHolder}
+      <ButtonDrawer onUserAdded={handleUserAdded} />
+
+      <Divider />
+
       <Table
         columns={columns}
         dataSource={usuarios}
