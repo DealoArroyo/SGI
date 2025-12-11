@@ -78,3 +78,44 @@ export const obtenerUsuariosDeInquilino = async (req, res) => {
     }
 };
 
+export const eliminarUsuario = async (req, res) => {
+    try {
+        const { id } = req.params;          // ID del usuario a eliminar
+        const id_inquilino = req.id_inquilino; // Inquilino desde el token
+        const id_usuario_token = req.id;       // ID del usuario logueado
+
+        // 0. Prevenir que un usuario elimine su propia cuenta
+        if (parseInt(id) === id_usuario_token) {
+            return res.status(400).json({ 
+                error: "No puedes eliminar tu propio usuario mientras tienes sesión activa" 
+            });
+        }
+
+        // 1. Verificar que el usuario existe y pertenece a este inquilino
+        const usuario = await pool.query(
+            `SELECT id, id_inquilino FROM usuarios WHERE id = $1`,
+            [id]
+        );
+
+        if (usuario.rows.length === 0) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        if (usuario.rows[0].id_inquilino !== id_inquilino) {
+            return res.status(403).json({ error: "No tienes permisos para eliminar este usuario" });
+        }
+
+        // 2. Eliminar de la base de datos
+        await pool.query(
+            `DELETE FROM usuarios WHERE id = $1`,
+            [id]
+        );
+
+        return res.json({ mensaje: "Usuario eliminado correctamente" });
+
+    } catch (error) {
+        console.error("Error en eliminarUsuario:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+

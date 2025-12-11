@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
     crearUsuario,
+    eliminarUsuario,
     obtenerUsuariosDeInquilino
 } from "../controllers/usuarios.controller.js";
 
@@ -17,6 +18,15 @@ router.post(
     verificarInquilino,
     verificarRol(["Administrador"]),
     crearUsuario
+);
+
+//Eliminar usuario (solo rol 2 = administrador del inquilino)
+router.delete(
+    "/:id", 
+    authMiddleware,
+    verificarInquilino,
+    verificarRol(["Administrador"]),
+    eliminarUsuario
 );
 
 // Obtener usuarios del inquilino actual
