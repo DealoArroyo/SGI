@@ -8,6 +8,7 @@ import inquilinosClientesRoutes from "./routes/inquilinos_clientes.routes.js";
 import usuariosRoutes from "./routes/usuarios.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import rolesRoutes from "./routes/roles.routes.js";
+import areasRoutes from "./routes/areas.routes.js";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use('/api/inquilinosClientes', inquilinosClientesRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/roles', rolesRoutes);
+app.use('/api/areas', areasRoutes);
 
 const PORT = process.env.PORT || 3000;
 
