@@ -1,3 +1,60 @@
+import { useState, useEffect, useRef } from "react";
+import { SearchOutlined, DeleteOutlined } from '@ant-design/icons';
+import { message, Table, Divider, Button, Popconfirm } from "antd";
+import api from "../api";
+import axios from "axios";
+import ButtonDrawerArea from "../components/buttonDrawerArea.jsx";
+
 export default function Inventario() {
-    return <h2>Gestión de Inventarios</h2>
+  const [areas, setAreas] = useState([]);
+  const [messageApi, contextHolder] = message.useMessage();
+
+  const success = () => {
+    messageApi.open({
+      type: "success",
+      content: "Área agregada correctamente"
+    });
+  };
+
+  const warning = () => {
+    messageApi.open({
+      type: "error",
+      content: "Área no se pudo agregar"
+    });
+  };
+
+  useEffect(() => {
+    const fetchAreas = async () => {
+      try {
+        const res = await api.get("http://localhost:3000/api/areas", {
+          withCredentials: true
+        });
+        setAreas(res.data);
+      } catch (error) {
+        console.error("Error obteniendo áreas:", error);
+      }
+    };
+
+    fetchAreas();
+  }, []);
+
+  const handleAreaAdded = (newArea) => {
+    try {
+      setAreas(prev => [...prev, newArea]);
+      success();
+    } catch (error) {
+      console.error("Error al crear área", error);
+      warning();
+    }
+  };
+
+  return (
+    <div>
+      {contextHolder}
+      <ButtonDrawerArea onAreaAdded={handleAreaAdded} />
+
+      <Divider />
+
+    </div>
+  );
 }

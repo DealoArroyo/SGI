@@ -69,3 +69,32 @@ export const obtenerAreasDeInquilino = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+export const eliminarArea = async (req, res) => {
+    try {
+        const { id } = req.params;          // ID del usuario a eliminar
+        const id_inquilino = req.id_inquilino; // Inquilino desde el token
+
+        // 1. Verificar que el usuario existe y pertenece a este inquilino
+        const area = await pool.query(
+            `SELECT id, id_inquilino FROM areas WHERE id = $1`,
+            [id]
+        );
+
+        if (area.rows.length === 0) {
+            return res.status(404).json({ error: "Área no encontrada" });
+        }
+
+        // 2. Eliminar de la base de datos
+        await pool.query(
+            `DELETE FROM areas WHERE id = $1`,
+            [id]
+        );
+
+        return res.json({ mensaje: "Área eliminada correctamente" });
+
+    } catch (error) {
+        console.error("Error en eliminar área:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
