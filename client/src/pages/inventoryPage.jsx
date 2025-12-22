@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
-import { SearchOutlined, DeleteOutlined } from '@ant-design/icons';
-import { message, Table, Divider, Button, Popconfirm } from "antd";
+import { useState, useEffect } from "react";
+import { message, Divider } from "antd";
 import api from "../api";
 import axios from "axios";
 import ButtonDrawerArea from "../components/buttonDrawerArea.jsx";
+import CardArea from "../components/cardArea.jsx";
 
 export default function Inventario() {
   const [areas, setAreas] = useState([]);
@@ -55,6 +55,14 @@ export default function Inventario() {
 
       <Divider />
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {areas.map((area) => (
+          <CardArea
+            key={area.id}
+            nombre={area.nombre}
+          />
+        ))}
+      </div>
     </div>
   );
-}
+};
