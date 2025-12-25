@@ -1,31 +1,31 @@
 import { Router } from "express";
-import { crearArea, obtenerAreasDeInquilino, eliminarArea } from "../controllers/areas.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { verificarInquilino } from "../middlewares/inquilino.middleware.js";
+import { crearCategoria, obtenerCategoriasDeInquilino, eliminarCategoria } from "../controllers/categorias.controller.js";
 import { verificarRol } from "../middlewares/rol.middleware.js";
 
 const router = Router();
 
 router.get(
-    "/",
+    "/", 
     authMiddleware,
-    verificarInquilino, 
-    obtenerAreasDeInquilino
+    verificarInquilino,
+    obtenerCategoriasDeInquilino
 );
 
 router.post(
     "/",
     authMiddleware,
     verificarInquilino, 
-    crearArea
+    crearCategoria
 );
 
 router.delete(
     "/:id",
     authMiddleware,
     verificarInquilino,
-    verificarRol(["Administrador"]), 
-    eliminarArea
+    verificarRol(["Administrador"]),
+    eliminarCategoria
 );
 
 export default router;

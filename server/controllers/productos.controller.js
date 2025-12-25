@@ -73,7 +73,46 @@ export const obtenerProductosDeInquilino = async (req, res) => {
                 p.vencimiento,
                 p.fecha_vencimiento,
                 p.id_unidad_medida
-            
-        `)
+            FROM productos p
+            WHERE p.id_inquilino = $1
+            ORDER BY a.id ASC;
+        `, [id_inquilino]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error al obtener productos", error);
+        res.status(500).json({ error: error.messages });
     }
-}
+};
+
+export const eliminarProducto = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const id_inquilino = req.id_inquilino;
+
+        // Verificar que el usuario existe y pertenece a este inquilino
+        const producto = await pool.query(`
+            SELECT
+                id,
+                id_inquilino
+            FROM productos
+            WHERE id = $1    
+        `, [id]
+        );
+
+        if (producto.rows.length === 0) {
+            return res.status(404).json({ error: "Producto no encontrado" });
+        }
+
+        await pool.query(`
+            DELETE
+            FROM productos
+            WHERE id = $1    
+        `, [id]
+        );
+
+        return res.json({ mensaje: "Producto eliminado correctamente" });
+    } catch (error) {
+        console.error("Error al eliminar producto:", error);
+        res.status(500).json({ error: error.message });
+    }
+};

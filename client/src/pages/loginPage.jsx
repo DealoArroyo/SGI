@@ -31,7 +31,7 @@ export default function Login() {
       if (decoded.exp < now) {
         localStorage.removeItem("token");
       } else {
-        navigate("/dashboard");
+        navigate("/");
       }
     }
   }, [navigate]);
@@ -43,7 +43,7 @@ export default function Login() {
       console.log("Respuesta del servidor:", data);
       
       success();
-      setTimeout(() => navigate("/dashboard"), 1500);
+      setTimeout(() => navigate("/"), 1500);
     } catch (error) {
       console.error("Error al conectar:", error);
       warning();

@@ -91,6 +91,25 @@ const MenuUsuario = () => {
     getItem('Cerrar sesión', '7', <LogoutOutlined style={{ color: 'red' }} />),
   ];
 
+  const breadcrumbMap = {
+    '1': [{ title: 'Dashboard' }],
+    '2': [{ title: 'Productos' }],
+    '3': [{ title: 'Inventario' }],
+    '4': [{ title: 'Pedidos' }],
+    '5': [{ title: 'Usuarios' }],
+    '6': [{ title: 'Configuración' }],
+  };
+
+  const breadcrumbItemRender = (route, params, routes, paths) => {
+    const isLast = routes.indexOf(route) === routes.length - 1;
+
+    return isLast ? (
+      <span>{route.title}</span>
+    ) : (
+      <span style={{ color: '#1677ff' }}>{route.title}</span>
+    );
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
@@ -105,7 +124,11 @@ const MenuUsuario = () => {
 
       <Layout>
         <Content style={{ margin: '0 16px' }}>
-          <Breadcrumb style={{ margin: '16px 0' }} />
+          <Breadcrumb 
+            style={{ margin: '16px 0' }}
+            items={breadcrumbMap[selectedView]}
+            itemRender={breadcrumbItemRender}
+          />
 
           <div
             style={{
