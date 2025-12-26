@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Drawer, Form, Input, Row, Select, Space, message } from 'antd';
+import Color from "./colorPicker.jsx"
 
 const ButtonDrawerArea = ({ onAreaAdded }) => {
   const [open, setOpen] = useState(false);
@@ -69,6 +70,15 @@ const ButtonDrawerArea = ({ onAreaAdded }) => {
                 rules={[{ required: true, message: 'Por favor, inserta un nombre' }]}
               >
                 <Input placeholder="Ingresa el nombre del área" />
+              </Form.Item>
+            </Col>
+            <Col>
+              <Form.Item
+                name="color"
+                label="Color"
+                rules={[{ required: true, message: 'Selecciona un color' }]}
+              >
+                <Color showText />
               </Form.Item>
             </Col>
           </Row>

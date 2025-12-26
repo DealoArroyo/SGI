@@ -19,7 +19,7 @@ export const obtenerAreas = async (req, res) => {
 
 export const crearArea = async (req, res) => {
     try {
-        const { nombre, descripcion } = req.body;
+        const { nombre, descripcion, color } = req.body;
 
         const id_inquilino = req.id_inquilino;
         if (!id_inquilino) {
@@ -27,15 +27,16 @@ export const crearArea = async (req, res) => {
         }
 
         const nuevaArea = await pool.query(`
-            INSERT INTO areas (nombre, descripcion, id_inquilino)
-                VALUES ($1, $2, $3)
+            INSERT INTO areas (nombre, descripcion, id_inquilino, color)
+                VALUES ($1, $2, $3, $4)
                 RETURNING
                     areas.id,
                     areas.nombre,
                     areas.descripcion,
-                    areas.id_inquilino;
+                    areas.id_inquilino,
+                    areas.color;
             `,
-            [nombre, descripcion, id_inquilino]
+            [nombre, descripcion, id_inquilino, color]
         );
 
         res.status(201).json({
@@ -56,7 +57,8 @@ export const obtenerAreasDeInquilino = async (req, res) => {
             SELECT
                 a.id, 
                 a.nombre, 
-                a.descripcion
+                a.descripcion,
+                a.color
             FROM areas a
             WHERE a.id_inquilino = $1
             ORDER BY a.id ASC;

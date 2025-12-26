@@ -48,6 +48,7 @@ export default function Inventario() {
             id={area.id}
             nombre={area.nombre}
             descripcion={area.descripcion}
+            color={area.color}
             onDelete={handleAreaDeleted}
           />
         ))}

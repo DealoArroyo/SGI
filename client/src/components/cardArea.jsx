@@ -2,7 +2,7 @@ import { Popconfirm, Button, message } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import api from "../api";
 
-const CardArea = ({ id, nombre, descripcion, onDelete }) => {
+const CardArea = ({ id, nombre, descripcion, color, onDelete }) => {
 
   const handleDelete = async () => {
     if (!id) {
@@ -24,7 +24,11 @@ const CardArea = ({ id, nombre, descripcion, onDelete }) => {
   };
 
   return (
-    <div className="bg-white border rounded-lg p-4 shadow-sm flex justify-between">
+    <div
+      className="bg-white rounded-lg p-4 shadow-lg flex justify-between border-l-8"
+      style={{ borderLeftColor: color }}
+    >
+
         <div>
             <h3 className="font-semibold">{nombre}</h3>
             <p className="text-gray-600">{descripcion}</p>
@@ -38,7 +42,7 @@ const CardArea = ({ id, nombre, descripcion, onDelete }) => {
             okText="Sí"
             cancelText="No"
             >
-                <Button danger shape="circle" type="primary" icon={<DeleteOutlined />} />
+              <Button danger shape="circle" type="primary" icon={<DeleteOutlined />} />
             </Popconfirm>
         </div>
     </div>
