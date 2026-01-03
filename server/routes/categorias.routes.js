@@ -7,7 +7,7 @@ import { verificarRol } from "../middlewares/rol.middleware.js";
 const router = Router();
 
 router.get(
-    "/", 
+    "/area/:id_area", 
     authMiddleware,
     verificarInquilino,
     obtenerCategoriasDeInquilino

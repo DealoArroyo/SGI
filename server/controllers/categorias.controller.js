@@ -53,20 +53,17 @@ export const crearCategoria = async (req, res) => {
 export const obtenerCategoriasDeInquilino = async (req, res) => {
     try {
         const id_inquilino = req.id_inquilino;
+        const { id_area } = req.params;
 
         const result = await pool.query(`
             SELECT
                 c.id,
-                c.nombre AS categoria,
-                c.descripcion AS descripcion,
-                a.nombre AS area,
-                i.nombre AS empresa
+                c.nombre,
+                c.descripcion
             FROM categorias c
-            JOIN areas a ON c.id_area = a.id
-            JOIN inquilinos i ON c.id_inquilino = i.id
-            WHERE c.id_inquilino = $1
+            WHERE c.id_inquilino = $1 AND c.id_area = $2
             ORDER BY c.id ASC;
-        `, [id_inquilino]);
+        `, [id_inquilino, id_area]);
         res.json(result.rows);
     } catch (error) {
         console.error("Error en obtener categorías de inquilinos:", error);

@@ -1,49 +1,63 @@
-import { useParams, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Divider } from "antd";
+import { useState, useEffect } from "react";
+import { message, Divider } from "antd";
 import api from "../api";
+import ButtonDrawerArea from "../components/buttonDrawerArea.jsx";
+import CardCategoria from "../components/cardCategoria.jsx";
+import { useParams } from "react-router-dom";
 
-export default function CategoriasPage() {
-  const { areaId } = useParams();
-  const location = useLocation();
-
+export default function Inventario() {
   const [categorias, setCategorias] = useState([]);
-  const [areaNombre, setAreaNombre] = useState(
-    location.state?.areaNombre || ""
-  );
+  const { id } = useParams();
+  const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     const fetchCategorias = async () => {
+
+      if (!id) return;
+
       try {
-        const res = await api.get(
-          `http://localhost:3000/api/categorias/inquilino`,
-          { withCredentials: true }
-        );
-        setCategorias(res.data);
+        const { data } = await api.get(`/categorias/area/${id}`, {
+          withCredentials: true
+        });
+        setCategorias(data);
       } catch (error) {
-        console.error("Error cargando categorías", error);
+        console.error("Error obteniendo categorías:", error);
+        messageApi.error("No se pudieron cargar las categorías");
       }
     };
 
     fetchCategorias();
-  }, [areaId, areaNombre]);
+  }, [id, messageApi]);
+
+  const handleCategoriaAdded = (newCategoria) => {
+    setCategorias(prev => [...prev, newCategoria]);
+    messageApi.success("Categoria creada correctamente");
+  };
+
+  const handleCategoriaDeleted = (id) => {
+    setCategorias(prev => prev.filter(categoria => categoria.id !== id));
+  };
 
   return (
     <div>
-      <h2 className="text-xl font-semibold">
-        Categorías de {areaNombre}
-      </h2>
+      {contextHolder}
+
+      <ButtonDrawerArea onAreaAdded={handleCategoriaAdded} />
 
       <Divider />
 
-      {categorias.map(cat => (
-        <div
-          key={cat.id}
-          className="border rounded p-3 mb-2"
-        >
-          {cat.nombre}
-        </div>
-      ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {categorias.map(categoria => (
+          <CardCategoria
+            key={categoria.id}
+            id={categoria.id}
+            nombre={categoria.nombre}
+            descripcion={categoria.descripcion}
+            color={categoria.color}
+            onDelete={handleCategoriaDeleted}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import ButtonDelete from "./buttonDelete";
 
-const CardArea = ({ id, nombre, descripcion, color, onDelete }) => {
+const CardCategoria = ({ id, nombre, descripcion, color, onDelete }) => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/inventario/${id}`, {
+    navigate(`/categoria/${id}`, {
       state: { nombre }
     });
   };
@@ -40,11 +40,11 @@ const CardArea = ({ id, nombre, descripcion, color, onDelete }) => {
             <div 
               className="flex items-center"
               onClick={(e) => e.stopPropagation()}>
-                <ButtonDelete
-                  id={id} 
-                  onDelete={(onDelete)}
-                  resource="areas"
-                  label="área"
+                <ButtonDelete 
+                    id={id} 
+                    onDelete={(onDelete)}
+                    resource="categorias"
+                    label="categoría" 
                 />
             </div>
         )}
@@ -52,4 +52,4 @@ const CardArea = ({ id, nombre, descripcion, color, onDelete }) => {
   );
 };
 
-export default CardArea;
+export default CardCategoria;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   ProductOutlined,
   TruckOutlined,
@@ -6,28 +6,18 @@ import {
   BookOutlined,
   UsergroupAddOutlined,
   SettingOutlined,
-  LogoutOutlined
-} from '@ant-design/icons';
-import { Breadcrumb, Layout, Menu, theme } from 'antd';
-import Productos from '../pages/productsPage.jsx';
-import Inventario from '../pages/inventoryPage.jsx';
-import Pedidos from '../pages/ordersPage.jsx';
-import Usuarios from '../pages/usersPage.jsx';
-import Configuracion from '../pages/settingsPage.jsx';
-import Ventas from '../pages/salesPage.jsx';
+  LogoutOutlined,
+} from "@ant-design/icons";
+import { Breadcrumb, Layout, Menu, theme } from "antd";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
-import { useNavigate } from "react-router-dom";
 
-const { Header, Content, Footer, Sider } = Layout;
+const { Content, Sider } = Layout;
 
-function getItem(label, key, icon, children) {
-  return { key, icon, children, label };
-}
-
-const MenuUsuario = () => {
-  const [selectedView, setSelectedView] = useState("1");
+const MenuUsuario = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState(null);
+  const location = useLocation();
   const navigate = useNavigate();
 
   const {
@@ -35,113 +25,101 @@ const MenuUsuario = () => {
   } = theme.useToken();
 
   useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const { data } = await api.get("/auth/perfil", { withCredentials: true });
-      console.log("PERFIL:", data);
-      setUser(data.user); // <--- AQUÍ EL FIX REAL
-    } catch (error) {
-      console.error("Error obteniendo perfil:", error);
-    }
-  };
-  fetchUser();
-}, []);
+    api.get("/auth/perfil", { withCredentials: true })
+      .then(res => setUser(res.data.user));
+  }, []);
 
+  const handleLogout = async () => {
+  try {
+    await api.post("/logout", {}, { withCredentials: true });
+  } catch (error) {
+    console.error("Error cerrando sesión", error);
+  } finally {
+    navigate("/login", { replace: true });
+    window.location.reload();
+  }
+};
 
-
-  const handleMenuClick = async (e) => {
-    if (e.key === "7") {
-      try {
-        await api.post("/logout", {}, { withCredentials: true });
-      } catch (error) {
-        console.error("Error cerrando sesión:", error);
-      }
-      navigate("/login");
-      return;
-    }
-    setSelectedView(e.key);
-  };
-
-  const renderContent = () => {
-    switch (selectedView) {
-      case '2': return <Productos />;
-      case '3': return <Inventario />;
-      case '4': return <Pedidos />;
-      case '5':
-        return user?.rol === "Administrador"
-          ? <Usuarios />
-        : <div>No autorizado</div>;
-
-      case '6': return <Configuracion />;
-      default: return <Ventas />;
-    }
-  };
 
   const menuItems = [
-    getItem('Dashboard', '1', <PieChartOutlined />),
-    getItem('Productos', '2', <ProductOutlined />),
-    getItem('Inventario', '3', <BookOutlined />),
-    getItem('Pedidos', '4', <TruckOutlined />),
-
+    {
+      key: "/",
+      icon: <PieChartOutlined />,
+      label: <Link to="/">Dashboard</Link>,
+    },
+    {
+      key: "/productos",
+      icon: <ProductOutlined />,
+      label: <Link to="/productos">Productos</Link>,
+    },
+    {
+      key: "/inventario",
+      icon: <BookOutlined />,
+      label: <Link to="/inventario">Inventario</Link>,
+    },
+    {
+      key: "/pedidos",
+      icon: <TruckOutlined />,
+      label: <Link to="/pedidos">Pedidos</Link>,
+    },
     ...(user?.rol === "Administrador"
-  ? [getItem('Usuarios', '5', <UsergroupAddOutlined />)]
-  : []),
-
-    getItem('Configuración', '6', <SettingOutlined />),
-    getItem('Cerrar sesión', '7', <LogoutOutlined style={{ color: 'red' }} />),
+      ? [{
+          key: "/usuarios",
+          icon: <UsergroupAddOutlined />,
+          label: <Link to="/usuarios">Usuarios</Link>,
+        }]
+      : []),
+    {
+      key: "/configuracion",
+      icon: <SettingOutlined />,
+      label: <Link to="/configuracion">Configuración</Link>,
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined style={{ color: "red" }} />,
+      label: <span onClick={handleLogout}>Cerrar sesión</span>,
+    },
   ];
 
-  const breadcrumbMap = {
-    '1': [{ title: 'Dashboard' }],
-    '2': [{ title: 'Productos' }],
-    '3': [{ title: 'Inventario' }],
-    '4': [{ title: 'Pedidos' }],
-    '5': [{ title: 'Usuarios' }],
-    '6': [{ title: 'Configuración' }],
-  };
-
-  const breadcrumbItemRender = (route, params, routes, paths) => {
-    const isLast = routes.indexOf(route) === routes.length - 1;
-
-    return isLast ? (
-      <span>{route.title}</span>
-    ) : (
-      <span style={{ color: '#1677ff' }}>{route.title}</span>
-    );
+  const breadcrumbNameMap = {
+    "/": "Dashboard",
+    "/productos": "Productos",
+    "/inventario": "Inventario",
+    "/pedidos": "Pedidos",
+    "/usuarios": "Usuarios",
+    "/configuracion": "Configuración",
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: "100vh" }}>
       <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
         <Menu
           theme="dark"
-          defaultSelectedKeys={['1']}
           mode="inline"
+          selectedKeys={[location.pathname]}
           items={menuItems}
-          onClick={handleMenuClick}
-          />
+        />
       </Sider>
 
       <Layout>
-        <Content style={{ margin: '0 16px' }}>
-          <Breadcrumb 
-            style={{ margin: '16px 0' }}
-            items={breadcrumbMap[selectedView]}
-            itemRender={breadcrumbItemRender}
-          />
+        <Content style={{ margin: "0 16px" }}>
+          <Breadcrumb style={{ margin: "16px 0" }}>
+            <Breadcrumb.Item>
+              {breadcrumbNameMap[location.pathname]}
+            </Breadcrumb.Item>
+          </Breadcrumb>
 
           <div
             style={{
               padding: 24,
-              minHeight: 500,
+              minHeight: 600,
               background: colorBgContainer,
               borderRadius: borderRadiusLG,
             }}
           >
-            {renderContent()}
+            {children}
           </div>
         </Content>
-
       </Layout>
     </Layout>
   );

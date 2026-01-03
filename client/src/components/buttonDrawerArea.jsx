@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Col, Drawer, Form, Input, Row, Select, Space, message } from 'antd';
+import { Button, Col, Drawer, Form, Input, Row, Select, Space } from 'antd';
 import Color from "./colorPicker.jsx"
 
 const ButtonDrawerArea = ({ onAreaAdded }) => {
