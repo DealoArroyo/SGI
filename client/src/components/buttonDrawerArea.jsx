@@ -1,107 +1,60 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Col, Drawer, Form, Input, Row, Select, Space } from 'antd';
-import Color from "./colorPicker.jsx"
+import axios from "axios";
+import { Col, Form, Input, Row } from "antd";
+import Color from "./colorPicker";
+import ButtonDrawerForm from "./buttonDrawerForm.jsx";
 
 const ButtonDrawerArea = ({ onAreaAdded }) => {
-  const [open, setOpen] = useState(false);
+  const handleSubmit = async (values) => {
+    const res = await axios.post(
+      "http://localhost:3000/api/areas",
+      values,
+      { withCredentials: true }
+    );
 
-  const [form] = Form.useForm();
-
-  // --- Abrir/Cerrar Drawer ---
-  const showDrawer = () => setOpen(true);
-  const onClose = () => {
-    setOpen(false);
-    form.resetFields(); // ← Limpia el form
-  };
-
-  // --- Enviar formulario ---
-  const onFinish = async (values) => {
-    try {
-      const res = await axios.post("http://localhost:3000/api/areas", values, {
-        withCredentials: true
-      });
-
-      const newArea = res.data.area;
-
-      onAreaAdded(newArea);
-
-      onClose(); // ← cierra el drawer y limpia
-    } catch (error) {
-      console.error(error);
-    }
+    onAreaAdded(res.data.area);
   };
 
   return (
-    <>
-      <Button type="primary" onClick={showDrawer} icon={<PlusOutlined />}>
-        Agregar área
-      </Button>
+    <ButtonDrawerForm
+      buttonText="Agregar área"
+      drawerTitle="Crear nueva área"
+      submitText="Agregar"
+      onSubmit={handleSubmit}
+    >
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="nombre"
+            label="Nombre"
+            rules={[{ required: true, message: "Inserta un nombre" }]}
+          >
+            <Input />
+          </Form.Item>
+        </Col>
 
-      <Drawer
-        title="Crear nueva área"
-        size="large"
-        onClose={onClose}
-        open={open}
-        styles={{ body: { paddingBottom: 80 } }}
-        extra={
-          <Space>
-            <Button onClick={onClose}>Cancelar</Button>
+        <Col>
+          <Form.Item
+            name="color"
+            label="Color"
+            rules={[{ required: true, message: "Selecciona un color" }]}
+          >
+            <Color showText />
+          </Form.Item>
+        </Col>
+      </Row>
 
-            {/* Botón que envia el form */}
-            <Button type="primary" onClick={() => form.submit()}>
-              Agregar
-            </Button>
-          </Space>
-        }
-      >
-        <Form
-          layout="vertical"
-          requiredMark={false}
-          form={form}
-          onFinish={onFinish} 
-        >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="nombre"
-                label="Nombre"
-                rules={[{ required: true, message: 'Por favor, inserta un nombre' }]}
-              >
-                <Input placeholder="Ingresa el nombre del área" />
-              </Form.Item>
-            </Col>
-            <Col>
-              <Form.Item
-                name="color"
-                label="Color"
-                rules={[{ required: true, message: 'Selecciona un color' }]}
-              >
-                <Color showText />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="descripcion"
-                label="Descripcion"
-                rules={[{ required: true, message: 'Por favor, inserta una descripción' }]}
-              >
-                <Input placeholder="Ingresa la descripción del área" />
-              </Form.Item>
-            </Col>
-
-          </Row>
-
-          <Row gutter={16}>
-
-          </Row>
-        </Form>
-      </Drawer>
-    </>
+      <Row gutter={16}>
+        <Col span={12}>
+          <Form.Item
+            name="descripcion"
+            label="Descripción"
+            rules={[{ required: true, message: "Inserta una descripción" }]}
+          >
+            <Input />
+          </Form.Item>
+        </Col>
+      </Row>
+    </ButtonDrawerForm>
   );
 };
 

@@ -72,6 +72,33 @@ export const obtenerAreasDeInquilino = async (req, res) => {
     }
 };
 
+export const obtenerAreaPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const id_inquilino = req.id_inquilino;
+
+    const result = await pool.query(
+      `
+      SELECT id, nombre, descripcion, color
+      FROM areas
+      WHERE id = $1 AND id_inquilino = $2
+      `,
+      [id, id_inquilino]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Área no encontrada" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error al obtener área:", error);
+    res.status(500).json({ message: "Error al obtener área" });
+  }
+};
+
+
+
 export const eliminarArea = async (req, res) => {
     try {
         const { id } = req.params;          // ID del usuario a eliminar
@@ -79,8 +106,12 @@ export const eliminarArea = async (req, res) => {
 
         // 1. Verificar que el usuario existe y pertenece a este inquilino
         const area = await pool.query(
-            `SELECT id, id_inquilino FROM areas WHERE id = $1`,
-            [id]
+            `SELECT 
+                id,
+                id_inquilino 
+            FROM areas 
+            WHERE id = $1
+            `, [id]
         );
 
         if (area.rows.length === 0) {

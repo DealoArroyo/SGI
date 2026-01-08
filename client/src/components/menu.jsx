@@ -9,14 +9,21 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons";
 import { Breadcrumb, Layout, Menu, theme } from "antd";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  Outlet
+} from "react-router-dom";
 import api from "../api";
 
 const { Content, Sider } = Layout;
 
-const MenuUsuario = ({ children }) => {
+const MenuUsuario = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [user, setUser] = useState(null);
+  const [breadcrumbExtra, setBreadcrumbExtra] = useState(null);
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -24,23 +31,40 @@ const MenuUsuario = ({ children }) => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
+  // ======================
+  // PERFIL
+  // ======================
   useEffect(() => {
     api.get("/auth/perfil", { withCredentials: true })
       .then(res => setUser(res.data.user));
   }, []);
 
+  // ======================
+  // LIMPIAR BREADCRUMB EXTRA
+  // ======================
+  useEffect(() => {
+    if (!location.pathname.startsWith("/inventario/")) {
+      setBreadcrumbExtra(null);
+    }
+  }, [location.pathname]);
+
+  // ======================
+  // LOGOUT
+  // ======================
   const handleLogout = async () => {
-  try {
-    await api.post("/logout", {}, { withCredentials: true });
-  } catch (error) {
-    console.error("Error cerrando sesión", error);
-  } finally {
-    navigate("/login", { replace: true });
-    window.location.reload();
-  }
-};
+    try {
+      await api.post("/logout", {}, { withCredentials: true });
+    } catch (error) {
+      console.error("Error cerrando sesión", error);
+    } finally {
+      navigate("/login", { replace: true });
+      window.location.reload();
+    }
+  };
 
-
+  // ======================
+  // MENU
+  // ======================
   const menuItems = [
     {
       key: "/",
@@ -81,7 +105,10 @@ const MenuUsuario = ({ children }) => {
     },
   ];
 
-  const breadcrumbNameMap = {
+  // ======================
+  // BREADCRUMB BASE DINÁMICO
+  // ======================
+  const breadcrumbMap = {
     "/": "Dashboard",
     "/productos": "Productos",
     "/inventario": "Inventario",
@@ -90,23 +117,43 @@ const MenuUsuario = ({ children }) => {
     "/configuracion": "Configuración",
   };
 
+  const basePath = "/" + location.pathname.split("/")[1];
+  const baseLabel = breadcrumbMap[basePath];
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[
+            location.pathname.startsWith("/inventario")
+              ? "/inventario"
+              : location.pathname
+          ]}
           items={menuItems}
         />
       </Sider>
 
       <Layout>
         <Content style={{ margin: "0 16px" }}>
+          {/* ======================
+              BREADCRUMB
+             ====================== */}
           <Breadcrumb style={{ margin: "16px 0" }}>
-            <Breadcrumb.Item>
-              {breadcrumbNameMap[location.pathname]}
-            </Breadcrumb.Item>
+            {baseLabel && (
+              <Breadcrumb.Item>
+                {basePath === "/" ? (
+                  baseLabel
+                ) : (
+                  <Link to={basePath}>{baseLabel}</Link>
+                )}
+              </Breadcrumb.Item>
+            )}
+
+            {breadcrumbExtra && (
+              <Breadcrumb.Item>{breadcrumbExtra}</Breadcrumb.Item>
+            )}
           </Breadcrumb>
 
           <div
@@ -117,7 +164,7 @@ const MenuUsuario = ({ children }) => {
               borderRadius: borderRadiusLG,
             }}
           >
-            {children}
+            <Outlet context={{ setBreadcrumbExtra }} />
           </div>
         </Content>
       </Layout>

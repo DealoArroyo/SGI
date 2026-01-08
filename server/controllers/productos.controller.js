@@ -4,15 +4,13 @@ export const obtenerProductos = async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT
-            p.id AS producto_id,
-            p.nombre AS producto_nombre,
-            p.detalles AS producto_detalles,
-            p.precio_venta AS producto_precio_venta,
-            p.costo_producto AS producto_costo_producto,
-            p.vencimiento AS producto_vence,
-            p.fecha_vencimiento AS producto_fecha_vencimiento,
-            um.nombre AS unidad_medida,
-            i.nombre AS inquilino_nombre
+                p.id AS producto_id,
+                p.nombre AS producto_nombre,
+                p.detalles AS producto_detalles,
+                p.precio_venta AS producto_precio_venta,
+                p.costo_producto AS producto_costo_producto,
+                p.vencimiento AS producto_vence,
+                um.descripcion AS unidad_medida
             FROM productos p
             JOIN unidades_medida um ON p.id_unidad_medida = um.id
             JOIN inquilinos i ON p.id_inquilino = i.id
@@ -25,7 +23,7 @@ export const obtenerProductos = async (req, res) => {
 
 export const crearProducto = async (req, res) => {
     try {
-        const { nombre, detalles, precio_venta, costo_producto, vencimiento, fecha_vencimiento, id_unidad_medida } = req.body;
+        const { nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida } = req.body;
 
         const id_inquilino = req.id_inquilino;
         if (!id_inquilino) {
@@ -33,8 +31,8 @@ export const crearProducto = async (req, res) => {
         }
 
         const nuevoProducto = await pool.query(`
-            INSERT INTO productos (nombre, detalles, precio_venta, costo_producto, vencimiento, fecha_vencimiento, id_unidad_medida, id_inquilino)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO productos (nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_inquilino)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING
                     productos.id,
                     productos.nombre,
@@ -42,11 +40,10 @@ export const crearProducto = async (req, res) => {
                     productos.precio_venta,
                     productos.costo_producto,
                     productos.vencimiento,
-                    productos.fecha_vencimiento,
                     productos.id_unidad_medida,
                     productos.id_inquilino;
         `,
-        [nombre, detalles, precio_venta, costo_producto, vencimiento, fecha_vencimiento, id_unidad_medida, id_inquilino]
+        [nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_inquilino]
         );
 
         res.status(201).json({
@@ -71,11 +68,12 @@ export const obtenerProductosDeInquilino = async (req, res) => {
                 p.precio_venta,
                 p.costo_producto,
                 p.vencimiento,
-                p.fecha_vencimiento,
-                p.id_unidad_medida
+                um.descripcion AS unidad_medida
             FROM productos p
+            JOIN unidades_medida um ON p.id_unidad_medida = um.id
             WHERE p.id_inquilino = $1
-            ORDER BY a.id ASC;
+            ORDER BY p.id ASC;
+
         `, [id_inquilino]);
         res.json(result.rows);
     } catch (error) {
@@ -88,31 +86,31 @@ export const eliminarProducto = async (req, res) => {
     try {
         const { id } = req.params;
         const id_inquilino = req.id_inquilino;
-
-        // Verificar que el usuario existe y pertenece a este inquilino
+        
         const producto = await pool.query(`
             SELECT
                 id,
                 id_inquilino
             FROM productos
-            WHERE id = $1    
-        `, [id]
+            WHERE id = $1 AND id_inquilino = $2    
+        `, [id, id_inquilino]
         );
 
         if (producto.rows.length === 0) {
-            return res.status(404).json({ error: "Producto no encontrado" });
+            return res.status(404).json({ error: "Producto no encontrada" })
         }
 
         await pool.query(`
-            DELETE
-            FROM productos
-            WHERE id = $1    
-        `, [id]
+            DELETE 
+            FROM productos 
+            WHERE id = $1 AND id_inquilino = $2
+        `, [id, id_inquilino]
         );
 
-        return res.json({ mensaje: "Producto eliminado correctamente" });
+        return res.json({ mensaje: "Producto eliminado de forma correcta" });
+
     } catch (error) {
-        console.error("Error al eliminar producto:", error);
+        console.error("Error al eliminar producto", error);
         res.status(500).json({ error: error.message });
     }
 };

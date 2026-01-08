@@ -21,7 +21,7 @@ export const obtenerCategorias = async (req, res) => {
 
 export const crearCategoria = async (req, res) => {
     try{
-        const { nombre, descripcion, id_area } = req.body;
+        const { nombre, descripcion, id_area, color } = req.body;
 
         const id_inquilino = req.id_inquilino;
         if (!id_inquilino) {
@@ -29,15 +29,16 @@ export const crearCategoria = async (req, res) => {
         }
 
         const nuevaCategoria = await pool.query(`
-            INSERT INTO categorias (nombre, descripcion, id_area, id_inquilino)
-                VALUES ($1, $2, $3, $4)
+            INSERT INTO categorias (nombre, descripcion, id_area, id_inquilino, color)
+                VALUES ($1, $2, $3, $4, $5)
                 RETURNING
                     categorias.id,
                     categorias.nombre,
                     categorias.descripcion,
                     categorias.id_area,
-                    categorias.id_inquilino
-        `, [nombre, descripcion, id_area, id_inquilino]
+                    categorias.id_inquilino,
+                    categorias.color;
+        `, [nombre, descripcion, id_area, id_inquilino, color]
         );
 
         res.status(201).json({
@@ -59,7 +60,8 @@ export const obtenerCategoriasDeInquilino = async (req, res) => {
             SELECT
                 c.id,
                 c.nombre,
-                c.descripcion
+                c.descripcion,
+                c.color
             FROM categorias c
             WHERE c.id_inquilino = $1 AND c.id_area = $2
             ORDER BY c.id ASC;
@@ -80,8 +82,8 @@ export const eliminarCategoria = async (req, res) => {
             SELECT
                 id,
                 id_inquilino
-            FROM areas
-            WHERE id = $1    
+            FROM categorias
+            WHERE id = $1 AND id_inquilino = $2    
         `, [id]
         );
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { crearArea, obtenerAreasDeInquilino, eliminarArea } from "../controllers/areas.controller.js";
+import { crearArea, obtenerAreasDeInquilino, obtenerAreaPorId, eliminarArea } from "../controllers/areas.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { verificarInquilino } from "../middlewares/inquilino.middleware.js";
 import { verificarRol } from "../middlewares/rol.middleware.js";
@@ -18,6 +18,13 @@ router.post(
     authMiddleware,
     verificarInquilino, 
     crearArea
+);
+
+router.get(
+  "/:id",
+  authMiddleware,
+  verificarInquilino,
+  obtenerAreaPorId
 );
 
 router.delete(
