@@ -2,17 +2,16 @@ import pool from "../db.js";
 
 export const obtenerCategorias = async (req, res) => {
     try {
+        const id_inquilino = req.id_inquilino;
+        const { id_area } = req.params.id_area;
         const result = await pool.query(`
             SELECT
-                ca.id AS categoria_id,
-                ca.nombre AS nombre,
-                ca.descripcion,
-                a.nombre AS area,
-                i.nombre AS empresa
-                FROM categorias ca
-                JOIN areas a ON ca.id_area = a.id
-                JOIN inquilinos i ON ca.id_inquilino = i.id
-        `);
+                id,
+                nombre,
+                descripcion
+            FROM categorias
+            WHERE id_inquilino = $1 AND id_area = $2
+        `, [id_inquilino, id_area]);
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -84,7 +83,7 @@ export const eliminarCategoria = async (req, res) => {
                 id_inquilino
             FROM categorias
             WHERE id = $1 AND id_inquilino = $2    
-        `, [id]
+        `, [id, id_inquilino]
         );
 
         if (categoria.rows.length === 0) {

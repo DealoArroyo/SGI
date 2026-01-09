@@ -10,10 +10,11 @@ export const obtenerProductos = async (req, res) => {
                 p.precio_venta AS producto_precio_venta,
                 p.costo_producto AS producto_costo_producto,
                 p.vencimiento AS producto_vence,
-                um.descripcion AS unidad_medida
+                um.descripcion AS unidad_medida,
+                c.nombre AS categoria
             FROM productos p
             JOIN unidades_medida um ON p.id_unidad_medida = um.id
-            JOIN inquilinos i ON p.id_inquilino = i.id
+            JOIN categorias c ON p.id_categoria = c.id
         `);
         res.json(result.rows);
     } catch (error) {
@@ -23,7 +24,7 @@ export const obtenerProductos = async (req, res) => {
 
 export const crearProducto = async (req, res) => {
     try {
-        const { nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida } = req.body;
+        const { nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria } = req.body;
 
         const id_inquilino = req.id_inquilino;
         if (!id_inquilino) {
@@ -31,8 +32,8 @@ export const crearProducto = async (req, res) => {
         }
 
         const nuevoProducto = await pool.query(`
-            INSERT INTO productos (nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_inquilino)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO productos (nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria, id_inquilino)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING
                     productos.id,
                     productos.nombre,
@@ -41,9 +42,10 @@ export const crearProducto = async (req, res) => {
                     productos.costo_producto,
                     productos.vencimiento,
                     productos.id_unidad_medida,
+                    productos.id_categoria,
                     productos.id_inquilino;
         `,
-        [nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_inquilino]
+        [nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria, id_inquilino]
         );
 
         res.status(201).json({
@@ -68,17 +70,22 @@ export const obtenerProductosDeInquilino = async (req, res) => {
                 p.precio_venta,
                 p.costo_producto,
                 p.vencimiento,
+                c.nombre AS categoria,
+                a.nombre AS area,
                 um.descripcion AS unidad_medida
             FROM productos p
-            JOIN unidades_medida um ON p.id_unidad_medida = um.id
+            LEFT JOIN unidades_medida um ON p.id_unidad_medida = um.id -- 👈 LEFT JOIN
+            LEFT JOIN categorias c ON p.id_categoria = c.id           -- 👈 LEFT JOIN
+            LEFT JOIN areas a ON c.id_area = a.id                     -- 👈 LEFT JOIN
             WHERE p.id_inquilino = $1
             ORDER BY p.id ASC;
-
         `, [id_inquilino]);
+
         res.json(result.rows);
     } catch (error) {
         console.error("Error al obtener productos", error);
-        res.status(500).json({ error: error.messages });
+        // Corrige también esto: era error.message, no error.messages
+        res.status(500).json({ error: error.message }); 
     }
 };
 

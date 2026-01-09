@@ -2,15 +2,15 @@ import pool from "../db.js";
 
 export const obtenerAreas = async (req, res) => {
     try {
+        const id_inquilino = req.id_inquilino;
         const result = await pool.query(`
             SELECT
-                a.id AS area_id,
-                a.nombre AS area_nombre,
-                a.descripcion AS area_descripcion,
-                i.nombre AS inquilino_nombre
-            FROM areas a
-            JOIN inquilinos i ON a.id_inquilino = i.id
-        `);
+                id,
+                nombre,
+                descripcion
+            FROM areas 
+            WHERE id_inquilino = $1
+        `, [id_inquilino]);
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -21,6 +21,8 @@ const { Option } = Select;
 
 export default function Productos() {
   const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [unidades, setUnidades] = useState([]);
   const [messageApi, contextHolder] = message.useMessage();
   const [searchText, setSearchText] = useState("");
@@ -46,6 +48,25 @@ export default function Productos() {
     setProductos(res.data);
   };
 
+  const fetchAreas = async () => {
+    const res = await api.get("/areas", {
+      withCredentials: true
+    });
+    console.log("Áreas recibidas:", res.data);
+    setAreas(res.data);
+  }
+
+  const handleAreaChange = async (areaId) => {
+    try {
+        const res = await api.get(`/categorias/area/${areaId}`, {
+            withCredentials: true
+        });
+        setCategorias(res.data);
+    } catch (error) {
+        console.error('Error al filtrar categorías', error);
+    }
+  };
+
   const fetchUnidades = async () => {
     const res = await api.get("/unidades-medida", {
       withCredentials: true
@@ -57,6 +78,7 @@ export default function Productos() {
   useEffect(() => {
     fetchProductos();
     fetchUnidades();
+    fetchAreas();
   }, []);
 
   /* =========================
@@ -165,6 +187,16 @@ export default function Productos() {
       dataIndex: "unidad_medida"
     },
     {
+      title: "Categoría",
+      dataIndex: "categoria",
+      ...getColumnSearchProps("categoria")
+    },
+    {
+      title: "Área",
+      dataIndex: "area",
+      ...getColumnSearchProps("area")
+    },
+    {
       title: "Acciones",
       render: (_, record) => (
         <Popconfirm
@@ -251,13 +283,57 @@ export default function Productos() {
           </Col>
         </Row>
 
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="id_area"
+              label="Área"
+              rules={[{ required: true }]}
+            >
+              <Select 
+              placeholder="Selecciona área"
+              onChange={handleAreaChange}
+              >
+                {areas
+                    .filter(area => area.id)
+                    .map((area) => (
+                    <Select.Option key={area.id} value={area.id}>
+                        {area.nombre}
+                    </Select.Option>
+                    ))
+                }
+                </Select>
+            </Form.Item>
+          </Col>
+
+          <Col span={12}>
+            <Form.Item
+              name="id_categoria"
+              label="Categoría"
+              rules={[{ required: true }]}
+            >
+              <Select placeholder="Selecciona categoría">
+                {categorias
+                    .filter(cat => cat.id !== null && cat.id !== undefined)
+                    .map((cat) => (
+                    <Select.Option key={cat.id} value={cat.id}>
+                        {cat.nombre}
+                    </Select.Option>
+                    ))
+                }
+                </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
         <Form.Item
-          name="detalles"
-          label="Detalles"
-          rules={[{ required: true }]}
-        >
-          <Input />
+                name="detalles"
+                label="Detalles"
+                rules={[{ required: true }]}
+                >
+                <Input />
         </Form.Item>
+
       </ButtonDrawerForm>
 
       <Divider />
