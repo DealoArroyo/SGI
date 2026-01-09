@@ -89,6 +89,26 @@ export const obtenerProductosDeInquilino = async (req, res) => {
     }
 };
 
+export const obtenerProductoDeCategoria = async (req, res) => {
+    try {
+        const { id_categoria } = req.params;
+        const id_inquilino = req.id_inquilino;
+
+        const result = await pool.query(`
+            SELECT 
+                id,
+                nombre,
+                detalles
+            FROM productos 
+            WHERE id_categoria = $1 AND id_inquilino = $2
+        `, [id_categoria, id_inquilino]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error al obtener categoría", error);
+        res.status(500).json({ error: error.message })
+    }
+}
+
 export const eliminarProducto = async (req, res) => {
     try {
         const { id } = req.params;
