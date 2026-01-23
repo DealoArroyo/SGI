@@ -16,6 +16,7 @@ import {
 import Highlighter from "react-highlight-words";
 import api from "../api";
 import ButtonDrawerForm from "../components/buttonDrawerForm";
+import { formatMoney } from "../components/helperMoney";
 
 const { Option } = Select;
 
@@ -176,11 +177,13 @@ export default function Productos() {
     },
     {
       title: "Precio Venta",
-      dataIndex: "precio_venta"
+      dataIndex: "precio_venta",
+      render: formatMoney
     },
     {
       title: "Costo",
-      dataIndex: "costo_producto"
+      dataIndex: "costo_producto",
+      render: formatMoney
     },
     {
       title: "Unidad de Medida",
@@ -234,7 +237,7 @@ export default function Productos() {
         }}
       >
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={8}>
             <Form.Item
               name="nombre"
               label="Nombre"
@@ -244,7 +247,17 @@ export default function Productos() {
             </Form.Item>
           </Col>
 
-          <Col span={12}>
+          <Col span={8}>
+            <Form.Item
+              name="cantidad"
+              label="Cantidad"
+              rules={[{ required: true }]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+
+          <Col span={8}>
             <Form.Item
               name="precio_venta"
               label="Precio de Venta"

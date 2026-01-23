@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import api from "../api";
 
-export default function PrivateRoute({ children }) {
-  const [isAuth, setIsAuth] = useState(null); // null = cargando
+export default function PrivateRoute() {
+  const [isAuth, setIsAuth] = useState(null);
 
   useEffect(() => {
-    api.get("/auth/perfil")
-      .then(() => setIsAuth(true))  // usuario válido
-      .catch(() => setIsAuth(false)); // token no válido o no existe
+    api.get("/auth/perfil", { withCredentials: true })
+      .then(() => setIsAuth(true))
+      .catch(() => setIsAuth(false));
   }, []);
 
   if (isAuth === null) {
-    return <p>Cargando...</p>; // pantalla temporal
+    return <p>Cargando...</p>;
   }
 
-  return isAuth ? children : <Navigate to="/login" />;
+  return isAuth ? <Outlet /> : <Navigate to="/login" replace />;
 }

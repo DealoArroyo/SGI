@@ -46,7 +46,16 @@ export const crearCategoria = async (req, res) => {
         });
     } catch (error) {
         console.error("Error al crear categoría:", error);
-        return res.status(500).json({ error: error.message });
+    
+        if (error.code === "23505") {
+            return res.status(409).json({
+                error: "Ya existe una categoría con ese nombre"
+            });
+        }
+
+        return res.status(500).json({
+            error: "Error interno en el servidor"
+        });
     }
 };
 

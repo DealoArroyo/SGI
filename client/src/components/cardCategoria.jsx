@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import api from "../api";
 import ButtonDelete from "./buttonDelete";
 
-const CardCategoria = ({ id, nombre, descripcion, color, onDelete }) => {
+const CardCategoria = ({ id, areaId, nombre, descripcion, color, onDelete }) => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/categoria/${id}`, {
+    navigate(`/inventario/${areaId}/${id}`, {
       state: { nombre }
     });
   };

@@ -24,7 +24,7 @@ export const obtenerProductos = async (req, res) => {
 
 export const crearProducto = async (req, res) => {
     try {
-        const { nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria } = req.body;
+        const { nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria, cantidad } = req.body;
 
         const id_inquilino = req.id_inquilino;
         if (!id_inquilino) {
@@ -32,8 +32,8 @@ export const crearProducto = async (req, res) => {
         }
 
         const nuevoProducto = await pool.query(`
-            INSERT INTO productos (nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria, id_inquilino)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO productos (nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria, id_inquilino, cantidad)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING
                     productos.id,
                     productos.nombre,
@@ -43,9 +43,10 @@ export const crearProducto = async (req, res) => {
                     productos.vencimiento,
                     productos.id_unidad_medida,
                     productos.id_categoria,
-                    productos.id_inquilino;
+                    productos.id_inquilino,
+                    productos.cantidad;
         `,
-        [nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria, id_inquilino]
+        [nombre, detalles, precio_venta, costo_producto, vencimiento, id_unidad_medida, id_categoria, id_inquilino, cantidad]
         );
 
         res.status(201).json({
@@ -96,11 +97,16 @@ export const obtenerProductoDeCategoria = async (req, res) => {
 
         const result = await pool.query(`
             SELECT 
-                id,
-                nombre,
-                detalles
-            FROM productos 
-            WHERE id_categoria = $1 AND id_inquilino = $2
+                p.id,
+                p.nombre,
+                p.detalles,
+                p.cantidad,
+                um.descripcion AS unidad_medida
+            FROM productos p
+            LEFT JOIN unidades_medida um 
+                ON p.id_unidad_medida = um.id
+            WHERE p.id_categoria = $1
+            AND p.id_inquilino = $2;
         `, [id_categoria, id_inquilino]);
         res.json(result.rows);
     } catch (error) {

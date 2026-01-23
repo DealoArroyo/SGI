@@ -7,6 +7,7 @@ import {
   UsergroupAddOutlined,
   SettingOutlined,
   LogoutOutlined,
+  CalendarOutlined
 } from "@ant-design/icons";
 import { Breadcrumb, Layout, Menu, theme } from "antd";
 import {
@@ -82,6 +83,11 @@ const MenuUsuario = () => {
       label: <Link to="/inventario">Inventario</Link>,
     },
     {
+      key: "/calendario",
+      icon: <CalendarOutlined />,
+      label: <Link to="/calendario">Calendario</Link>,
+    },
+    {
       key: "/pedidos",
       icon: <TruckOutlined />,
       label: <Link to="/pedidos">Pedidos</Link>,
@@ -115,6 +121,7 @@ const MenuUsuario = () => {
     "/pedidos": "Pedidos",
     "/usuarios": "Usuarios",
     "/configuracion": "Configuración",
+    "/calendario": "Calendario"
   };
 
   const basePath = "/" + location.pathname.split("/")[1];

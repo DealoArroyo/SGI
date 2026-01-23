@@ -13,6 +13,7 @@
     "antd": "^5.28.0",
     "antd-mobile": "^5.41.1",
     "axios": "^1.13.0",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.23.26",
     "jwt-decode": "^4.0.0",
     "react": "^19.1.1",
