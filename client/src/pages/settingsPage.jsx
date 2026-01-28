@@ -1,6 +1,10 @@
+import Grafica from "../components/estadisticas/grafica";
 
 export default function Configuracion() {
     return (
-        <h2>Apartado de Configuración</h2>
+        <div>
+            <h2>Apartado de Configuración</h2>
+            <Grafica />
+        </div>
     );
 }

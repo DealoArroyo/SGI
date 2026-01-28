@@ -73,11 +73,13 @@ export const obtenerProductosDeInquilino = async (req, res) => {
                 p.vencimiento,
                 c.nombre AS categoria,
                 a.nombre AS area,
+                p.cantidad,
+                (p.cantidad * p.precio_venta) - (p.cantidad * p.costo_producto) AS ganancia,
                 um.descripcion AS unidad_medida
             FROM productos p
-            LEFT JOIN unidades_medida um ON p.id_unidad_medida = um.id -- 👈 LEFT JOIN
-            LEFT JOIN categorias c ON p.id_categoria = c.id           -- 👈 LEFT JOIN
-            LEFT JOIN areas a ON c.id_area = a.id                     -- 👈 LEFT JOIN
+            LEFT JOIN unidades_medida um ON p.id_unidad_medida = um.id
+            LEFT JOIN categorias c ON p.id_categoria = c.id
+            LEFT JOIN areas a ON c.id_area = a.id
             WHERE p.id_inquilino = $1
             ORDER BY p.id ASC;
         `, [id_inquilino]);

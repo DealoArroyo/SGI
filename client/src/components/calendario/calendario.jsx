@@ -1,121 +1,212 @@
-import React, { useState } from 'react';
-import { 
-  format, addMonths, subMonths, startOfMonth, endOfMonth, 
-  startOfWeek, endOfWeek, isSameMonth, isSameDay, addDays,
-} from 'date-fns';
+import { useState, useEffect } from "react";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  addMonths,
+  subMonths,
+  isSameMonth,
+  isSameDay
+} from "date-fns";
+import { es } from "date-fns/locale";
+import {
+  Button,
+  Card,
+  Drawer,
+  Form,
+  Input,
+  Popconfirm,
+  message,
+  Row,
+  Col
+} from "antd";
+import {
+  LeftOutlined,
+  RightOutlined,
+  PlusOutlined,
+  DeleteOutlined
+} from "@ant-design/icons";
+import api from "../../api";
 
-const Calendario = () => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [events, setEvents] = useState({});
-  const [showModal, setShowModal] = useState(false);
-  const [newEventText, setNewEventText] = useState("");
-
-  // Funciones de navegación
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-
-  // Generar los días del calendario
-  const renderDays = () => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
-
-    const rows = [];
-    let days = [];
-    let day = startDate;
-
-    while (day <= endDate) {
-      for (let i = 0; i < 7; i++) {
-        const formattedDate = format(day, "yyyy-MM-dd");
-        const isSelected = isSameDay(day, selectedDate);
-        const isCurrentMonth = isSameMonth(day, monthStart);
-        
-        const cloneDay = day;
-        days.push(
-          <div
-            key={formattedDate}
-            className={`min-h-[100px] border p-2 cursor-pointer transition-colors ${
-              !isCurrentMonth ? "bg-gray-50 text-gray-400" : "bg-white"
-            } ${isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
-            onClick={() => {
-              setSelectedDate(cloneDay);
-              setShowModal(true);
-            }}
-          >
-            <span className="font-semibold">{format(day, "d")}</span>
-            <div className="mt-1">
-              {events[formattedDate]?.map((ev, idx) => (
-                <div key={idx} className="text-xs bg-blue-600 text-white p-1 rounded mb-1 truncate">
-                  {ev}
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-        day = addDays(day, 1);
-      }
-      rows.push(<div className="grid grid-cols-7" key={day}>{days}</div>);
-      days = [];
-    }
-    return rows;
+/* 🔹 Utilidad calendario */
+const getCalendarRange = (currentMonth) => {
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  return {
+    start: startOfWeek(monthStart),
+    end: endOfWeek(monthEnd),
+    monthStart,
   };
-
-  const handleAddEvent = () => {
-    const dateKey = format(selectedDate, "yyyy-MM-dd");
-    const updatedEvents = { ...events };
-    if (!updatedEvents[dateKey]) updatedEvents[dateKey] = [];
-    updatedEvents[dateKey].push(newEventText);
-    setEvents(updatedEvents);
-    setNewEventText("");
-    setShowModal(false);
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto p-4">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">
-          {format(currentMonth, "MMMM yyyy")}
-        </h2>
-        <div className="space-x-2">
-          <button onClick={prevMonth} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Ant.</button>
-          <button onClick={nextMonth} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Sig.</button>
-        </div>
-      </div>
-
-      {/* Días de la semana */}
-      <div className="grid grid-cols-7 mb-2 text-center font-bold text-gray-600">
-        {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => <div key={d}>{d}</div>)}
-      </div>
-
-      {/* Cuerpo del Calendario */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
-        {renderDays()}
-      </div>
-
-      {/* Modal Simple para Eventos */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
-            <h3 className="text-lg font-bold mb-4">Agregar evento para {format(selectedDate, "dd/MM/yyyy")}</h3>
-            <input 
-              type="text"
-              className="w-full border border-gray-200 p-2 rounded-lg mb-4 focus:outline-blue-500"
-              placeholder="Detalle del evento"
-              value={newEventText}
-              onChange={(e) => setNewEventText(e.target.value)}
-            />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600">Cancelar</button>
-              <button onClick={handleAddEvent} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Guardar</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 };
 
-export default Calendario;
+export default function AgendaCalendar() {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [openDrawer, setOpenDrawer] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [agendas, setAgendas] = useState([]);
+
+  const { start, end, monthStart } = getCalendarRange(currentMonth);
+
+  useEffect(() => {
+    fetchAgendas();
+  }, []);
+
+  const fetchAgendas = async () => {
+    const res = await api.get("/agendas");
+    setAgendas(
+      res.data.map(a => ({
+        ...a,
+        date: new Date(a.fecha)
+      }))
+    );
+  };
+
+  /* 🔹 Crear agenda */
+  const onFinish = async (values) => {
+    await api.post("/agendas", {
+      titulo: values.title,
+      fecha: format(selectedDate, "yyyy-MM-dd"),
+    });
+
+    message.success("Agenda creada");
+    setOpenDrawer(false);
+    fetchAgendas();
+  };
+
+  /* 🔹 Eliminar agenda */
+  const eliminarAgenda = async (id) => {
+    await api.delete(`/agendas/${id}`);
+    message.success("Agenda eliminada correctamente");
+    fetchAgendas();
+  };
+
+  /* 🔹 Render días */
+  const days = [];
+  let day = start;
+
+  while (day <= end) {
+    const cloneDay = day;
+    const formattedDate = format(day, "d");
+
+    days.push(
+      <Col span={3} key={day}>
+        <Card
+          size="small"
+          hoverable
+          style={{
+            minHeight: 100,
+            background: isSameMonth(day, monthStart)
+              ? "#fff"
+              : "#f5f5f5",
+            border:
+              selectedDate && isSameDay(day, selectedDate)
+                ? "2px solid #1677ff"
+                : "1px solid #e0e0e0",
+          }}
+          onClick={() => {
+            setSelectedDate(cloneDay);
+            setOpenDrawer(true);
+          }}
+        >
+          <strong>{formattedDate}</strong>
+
+          {agendas
+            .filter((a) => isSameDay(a.date, cloneDay))
+            .map((agenda) => (
+              <div
+                key={agenda.id}
+                onClick={(e) => e.stopPropagation()} // ✅ CLAVE
+                style={{
+                  marginTop: 6,
+                  padding: 4,
+                  background: "#e6f4ff",
+                  borderRadius: 4,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ fontSize: 12 }}>{agenda.titulo}</span>
+
+                <Popconfirm
+                  title="¿Eliminar agenda?"
+                  onConfirm={(e) => {
+                    e?.stopPropagation();
+                    eliminarAgenda(agenda.id);
+                  }}
+                  onCancel={(e) => e?.stopPropagation()}
+                >
+                  <DeleteOutlined
+                    onClick={(e) => e.stopPropagation()} // ✅ CLAVE
+                    style={{ color: "red", fontSize: 12 }}
+                  />
+                </Popconfirm>
+              </div>
+            ))}
+        </Card>
+      </Col>
+    );
+
+    day = addDays(day, 1);
+  }
+
+  /* 🔹 Mes en español */
+  const mes = format(currentMonth, "MMMM yyyy", { locale: es });
+  const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
+
+  return (
+    <>
+      {/* 🔹 Header */}
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Button
+          icon={<LeftOutlined />}
+          onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+        />
+
+        <h2 style={{ margin: 0 }}>{mesCapitalizado}</h2>
+
+        <Button
+          icon={<RightOutlined />}
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+        />
+      </Row>
+
+      {/* 🔹 Calendario */}
+      <Row gutter={[8, 8]}>{days}</Row>
+
+      {/* 🔹 Drawer animado */}
+      <Drawer
+        title={`Nueva agenda — ${
+          selectedDate ? format(selectedDate, "dd/MM/yyyy") : ""
+        }`}
+        open={openDrawer}
+        onClose={() => setOpenDrawer(false)}
+        placement="right"
+        width={380}
+        destroyOnClose
+      >
+        <Form layout="vertical" onFinish={onFinish}>
+          <Form.Item
+            label="Título"
+            name="title"
+            rules={[{ required: true, message: "Escribe un título" }]}
+          >
+            <Input placeholder="Ej. Reunión, cita médica..." />
+          </Form.Item>
+
+          <Button
+            type="primary"
+            htmlType="submit"
+            icon={<PlusOutlined />}
+            block
+          >
+            Guardar agenda
+          </Button>
+        </Form>
+      </Drawer>
+    </>
+  );
+}

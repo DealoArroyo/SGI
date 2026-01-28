@@ -1,5 +1,7 @@
-import Calendario from "../components/calendario/calendario";
+import Calendario from '../components/calendario/calendario.jsx';
 
 export default function CalendarioPage() {
-    <Calendario />
+    return (
+        <Calendario />
+    );
 }

@@ -12,6 +12,7 @@ import areasRoutes from "./routes/areas.routes.js";
 import productosRoutes from "./routes/productos.routes.js";
 import categoriasRoutes from "./routes/categorias.routes.js";
 import unidadesRoutes from "./routes/unidades.routes.js";
+import agendasRoutes from "./routes/agendas.routes.js";
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use('/api/areas', areasRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/unidades-medida', unidadesRoutes);
+app.use('/api/agendas', agendasRoutes);
 
 const PORT = process.env.PORT || 3000;
 

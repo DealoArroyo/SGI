@@ -172,22 +172,12 @@ export default function Productos() {
       ...getColumnSearchProps("nombre")
     },
     {
-      title: "Detalles",
-      dataIndex: "detalles"
+      title: "Cantidad",
+      dataIndex: "cantidad"
     },
     {
-      title: "Precio Venta",
-      dataIndex: "precio_venta",
-      render: formatMoney
-    },
-    {
-      title: "Costo",
-      dataIndex: "costo_producto",
-      render: formatMoney
-    },
-    {
-      title: "Unidad de Medida",
-      dataIndex: "unidad_medida"
+      title: "Unidad de medida",
+      dataIndex: "unidad_medida",
     },
     {
       title: "Categoría",
@@ -198,6 +188,21 @@ export default function Productos() {
       title: "Área",
       dataIndex: "area",
       ...getColumnSearchProps("area")
+    },
+    {
+      title: "Costo",
+      dataIndex: "costo_producto",
+      render: formatMoney
+    },
+    {
+      title: "Precio de venta",
+      dataIndex: "precio_venta",
+      render: formatMoney
+    },
+    {
+      title: "Ganancia",
+      dataIndex: "ganancia",
+      render: formatMoney
     },
     {
       title: "Acciones",
@@ -355,6 +360,7 @@ export default function Productos() {
         columns={columns}
         dataSource={productos}
         rowKey="id"
+        scroll={{ x: "max-content", y: 400 }}
       />
     </div>
   );

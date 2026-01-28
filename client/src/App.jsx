@@ -14,7 +14,7 @@ import UsuariosDelInquilino from "./pages/usersPage.jsx";
 import Configuracion from "./pages/settingsPage.jsx";
 import Pedidos from "./pages/ordersPage.jsx";
 import Ventas from "./pages/salesPage.jsx";
-import Calendario from "./pages/calendarioPage.jsx";
+import CalendarioPage from "./pages/calendarioPage.jsx";
 
 function App() {
   return (
@@ -44,7 +44,7 @@ function App() {
             <Route path="configuracion" element={<Configuracion />} />
             <Route path="pedidos" element={<Pedidos />} />
             <Route path="ventas" element={<Ventas />} />
-            <Route path="calendario" element={<Calendario />} />
+            <Route path="calendario" element={<CalendarioPage />} />
           </Route>
         </Route>
       </Routes>
