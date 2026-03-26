@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { obtenerAgendasPorInquilino, crearAgenda, eliminarAgenda } from "../controllers/agendas.controller.js";
+import { obtenerAgendasPorInquilino, crearAgenda, eliminarAgenda, actualizarAgenda } from "../controllers/agendas.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { verificarInquilino } from "../middlewares/inquilino.middleware.js";
 import { verificarRol } from "../middlewares/rol.middleware.js";
@@ -25,6 +25,13 @@ router.delete(
     authMiddleware,
     verificarInquilino,
     eliminarAgenda
+);
+
+router.put(
+    "/:id",
+    authMiddleware,
+    verificarInquilino,
+    actualizarAgenda
 );
 
 export default router;

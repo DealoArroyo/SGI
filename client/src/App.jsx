@@ -1,54 +1,68 @@
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LoginPage from "./pages/loginPage.jsx";
+import { App as AntdApp, ConfigProvider, theme } from "antd";
 import PrivateRoute from "./components/privateRoute.jsx";
 import MenuUsuario from "./components/menu.jsx";
+import PageLoader from "./components/pageLoader.jsx";
 
 // Páginas
-import Dashboard from "./pages/homePage.jsx";
-import InventarioLayout from "./pages/inventarioLayout.jsx";
-import InventarioPage from "./pages/inventoryPage.jsx";
-import CategoriaPage from "./pages/categoriasPage.jsx";
-import PaginaDetalle from "./pages/productosCategoriaPage.jsx";
-import Productos from "./pages/productsPage.jsx";
-import UsuariosDelInquilino from "./pages/usersPage.jsx";
-import Configuracion from "./pages/settingsPage.jsx";
-import Pedidos from "./pages/ordersPage.jsx";
-import Ventas from "./pages/salesPage.jsx";
-import CalendarioPage from "./pages/calendarioPage.jsx";
+const LoginPage = lazy(() => import("./pages/loginPage.jsx"));
+const Dashboard = lazy(() => import("./pages/homePage.jsx"));
+const InventarioLayout = lazy(() => import("./pages/inventarioLayout.jsx"));
+const InventarioPage = lazy(() => import("./pages/inventoryPage.jsx"));
+const CategoriaPage = lazy(() => import("./pages/categoriasPage.jsx"));
+const PaginaDetalle = lazy(() => import("./pages/productosCategoriaPage.jsx"));
+const Productos = lazy(() => import("./pages/productsPage.jsx"));
+const UsuariosDelInquilino = lazy(() => import("./pages/usersPage.jsx"));
+const Configuracion = lazy(() => import("./pages/settingsPage.jsx"));
+const Pedidos = lazy(() => import("./pages/ordersPage.jsx"));
+const Ventas = lazy(() => import("./pages/salesPage.jsx"));
+const CalendarioPage = lazy(() => import("./pages/calendarioPage.jsx"));
+const ClientesPage = lazy(() => import("./pages/clientesPage.jsx"));
+import { useThemeMode } from "./context/themeContext.jsx";
 
 function App() {
+  const { isDarkMode } = useThemeMode();
+
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* LOGIN */}
-        <Route path="/login" element={<LoginPage />} />
+    <ConfigProvider
+      theme={{
+        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+      }}
+    >
+      <AntdApp>
+        <BrowserRouter>
+          <Suspense fallback={<PageLoader label="Cargando pantalla" />}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
 
-        {/* RUTAS PRIVADAS */}
-        <Route element={<PrivateRoute />}>
-          {/* LAYOUT PRINCIPAL */}
-          <Route element={<MenuUsuario />}>
-            <Route index element={<Dashboard />} />
+              <Route element={<PrivateRoute />}>
+                <Route element={<MenuUsuario />}>
+                  <Route index element={<Dashboard />} />
 
-            {/* INVENTARIO */}
-            <Route path="inventario" element={<InventarioLayout />}>
-              <Route index element={<InventarioPage />} />
-              <Route path=":areaId" element={<CategoriaPage />} />
-              <Route
-                path=":areaId/:categoriaId"
-                element={<PaginaDetalle />}
-              />
-            </Route>
+                  <Route path="inventario" element={<InventarioLayout />}>
+                    <Route index element={<InventarioPage />} />
+                    <Route path=":areaId" element={<CategoriaPage />} />
+                    <Route
+                      path=":areaId/:categoriaId"
+                      element={<PaginaDetalle />}
+                    />
+                  </Route>
 
-            <Route path="productos" element={<Productos />} />
-            <Route path="usuarios" element={<UsuariosDelInquilino />} />
-            <Route path="configuracion" element={<Configuracion />} />
-            <Route path="pedidos" element={<Pedidos />} />
-            <Route path="ventas" element={<Ventas />} />
-            <Route path="calendario" element={<CalendarioPage />} />
-          </Route>
-        </Route>
-      </Routes>
-    </BrowserRouter>
+                  <Route path="productos" element={<Productos />} />
+                  <Route path="usuarios" element={<UsuariosDelInquilino />} />
+                  <Route path="configuracion" element={<Configuracion />} />
+                  <Route path="pedidos" element={<Pedidos />} />
+                  <Route path="ventas" element={<Ventas />} />
+                  <Route path="calendario" element={<CalendarioPage />} />
+                  <Route path="clientes" element={<ClientesPage />} />
+                </Route>
+              </Route>
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AntdApp>
+    </ConfigProvider>
   );
 }
 

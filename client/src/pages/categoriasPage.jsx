@@ -17,12 +17,13 @@ function useSafeOutletContext() {
 
 export default function Categoria() {
   const [categorias, setCategorias] = useState([]);
+  const [userRole, setUserRole] = useState("");
 
   // ✅ SOLO un param (el correcto)
   const { areaId } = useParams();
 
   const outletContext = useSafeOutletContext();
-  const setBreadcrumbExtra = outletContext?.setBreadcrumbExtra;
+  const setBreadcrumbItems = outletContext?.setBreadcrumbItems;
 
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -30,14 +31,16 @@ export default function Categoria() {
   // BREADCRUMB
   // ======================
   useEffect(() => {
-    if (!setBreadcrumbExtra || !areaId) return;
+    if (!setBreadcrumbItems || !areaId) return;
 
     const fetchArea = async () => {
       try {
         const { data } = await api.get(`/areas/${areaId}`, {
           withCredentials: true,
         });
-        setBreadcrumbExtra(data.nombre);
+        setBreadcrumbItems([
+          { title: data.nombre, path: `/inventario/${areaId}` },
+        ]);
       } catch (err) {
         console.error("Error al cargar área:", err);
       }
@@ -45,8 +48,8 @@ export default function Categoria() {
 
     fetchArea();
 
-    return () => setBreadcrumbExtra(null);
-  }, [areaId, setBreadcrumbExtra]);
+    return () => setBreadcrumbItems([]);
+  }, [areaId, setBreadcrumbItems]);
 
   // ======================
   // CATEGORÍAS
@@ -56,10 +59,16 @@ export default function Categoria() {
 
     const fetchCategorias = async () => {
       try {
-        const { data } = await api.get(`/categorias/area/${areaId}`, {
-          withCredentials: true,
-        });
-        setCategorias(data);
+        const [categoriasRes, perfilRes] = await Promise.all([
+          api.get(`/categorias/area/${areaId}`, {
+            withCredentials: true,
+          }),
+          api.get("/auth/perfil", {
+            withCredentials: true,
+          }),
+        ]);
+        setCategorias(categoriasRes.data || []);
+        setUserRole(perfilRes.data?.user?.rol || "");
       } catch (err) {
         console.error(err);
         messageApi.error("No se pudieron cargar las categorías");
@@ -146,19 +155,29 @@ export default function Categoria() {
 
       <Divider />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categorias.map((c) => (
-          <CardCategoria
-            key={c.id}
-            id={c.id}
-            areaId={areaId}
-            nombre={c.nombre}
-            descripcion={c.descripcion}
-            color={c.color}
-            onDelete={handleDeleteCategoria}
-          />
-        ))}
-      </div>
+      {categorias.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center bg-slate-50">
+          <p className="text-slate-700 font-medium">No hay categorías en esta área</p>
+          <p className="text-slate-500 text-sm mt-1">
+            Agrega una categoría para organizar productos.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {categorias.map((c) => (
+            <CardCategoria
+              key={c.id}
+              id={c.id}
+              areaId={areaId}
+              nombre={c.nombre}
+              descripcion={c.descripcion}
+              color={c.color}
+              canDelete={userRole === "Administrador"}
+              onDelete={handleDeleteCategoria}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

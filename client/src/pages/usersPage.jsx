@@ -3,7 +3,6 @@ import { SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { message, Table, Divider, Input, Space, Button, Popconfirm } from "antd";
 import Highlighter from 'react-highlight-words';
 import api from "../api";
-import axios from "axios";
 import ButtonDrawer from "../components/buttonDrawer.jsx";
 
 export default function UsuariosDelInquilino() {
@@ -110,9 +109,7 @@ export default function UsuariosDelInquilino() {
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const res = await api.get("http://localhost:3000/api/usuarios/inquilino", {
-          withCredentials: true
-        });
+        const res = await api.get("/usuarios/inquilino");
         setUsuarios(res.data);
       } catch (error) {
         console.error("Error obteniendo usuarios:", error);
@@ -121,9 +118,7 @@ export default function UsuariosDelInquilino() {
 
     const fetchPerfil = async () => {
       try {
-        const res = await api.get("http://localhost:3000/api/auth/perfil", {
-          withCredentials: true
-        });
+        const res = await api.get("/auth/perfil");
         setUsuarioActual(res.data.user);   // ← Guardar usuario actual
       } catch (error) {
         console.error("Error obteniendo perfil:", error);
@@ -147,9 +142,7 @@ export default function UsuariosDelInquilino() {
   // 🔥 NUEVO: eliminar usuario del backend + quitarlo de la tabla
   const handleUserDeleted = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/api/usuarios/${id}`, {
-        withCredentials: true
-      });
+      await api.delete(`/usuarios/${id}`);
 
       setUsuarios(prev => prev.filter(u => u.id !== id));
       message.success("Usuario eliminado");

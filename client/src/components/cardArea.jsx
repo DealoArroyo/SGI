@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
 import ButtonDelete from "./buttonDelete";
+import { RightOutlined } from "@ant-design/icons";
 
-const CardArea = ({ id, nombre, descripcion, color, onDelete }) => {
-  const [user, setUser] = useState(null);
+const CardArea = ({ id, nombre, descripcion, color, canDelete, onDelete }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -12,33 +10,31 @@ const CardArea = ({ id, nombre, descripcion, color, onDelete }) => {
       state: { nombre }
     });
   };
-  useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const { data } = await api.get("/auth/perfil", { withCredentials: true });
-                setUser(data.user);
-            } catch (error) {
-                console.error("Error obteniendo perfil:", error);
-            }
-        };
-        fetchUser();
-    }, []);
 
   return (
     <div
       onClick={handleClick}
-      className="bg-white rounded-lg p-4 shadow-lg flex justify-between border-l-8"
-      style={{ borderLeftColor: color }}
+      className="inventory-card group relative cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 pr-12 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
     >
-
-        <div>
-            <h3 className="font-semibold">{nombre}</h3>
-            <p className="text-gray-600">{descripcion}</p>
+        <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: color || "#64748b" }}
+              />
+            </div>
+            <h3 className="inventory-card-title font-semibold text-slate-900 truncate">{nombre}</h3>
+            <p className="inventory-card-desc text-sm text-slate-600 mt-1 line-clamp-2">
+              {descripcion || "Sin descripción"}
+            </p>
+            <div className="inventory-card-link mt-3 mb-9 inline-flex items-center gap-1 text-sm text-blue-700 group-hover:text-blue-800">
+              Ver categorías <RightOutlined className="text-xs" />
+            </div>
         </div>
 
-        {user?.rol === "Administrador" && (
+        {canDelete && (
             <div 
-              className="flex items-center"
+              className="inventory-card-delete absolute right-3 top-3 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"
               onClick={(e) => e.stopPropagation()}>
                 <ButtonDelete
                   id={id} 

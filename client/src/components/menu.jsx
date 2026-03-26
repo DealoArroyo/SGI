@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ProductOutlined,
   TruckOutlined,
@@ -7,9 +7,10 @@ import {
   UsergroupAddOutlined,
   SettingOutlined,
   LogoutOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  TeamOutlined
 } from "@ant-design/icons";
-import { Breadcrumb, Layout, Menu, theme } from "antd";
+import { Breadcrumb, Layout, theme } from "antd";
 import {
   Link,
   useLocation,
@@ -19,11 +20,17 @@ import {
 import api from "../api";
 
 const { Content, Sider } = Layout;
+const SIDER_WIDTH = 220;
+const SIDER_COLLAPSED_WIDTH = 80;
+const NAV_MODE_KEY = "sgi_nav_mode";
 
 const MenuUsuario = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [navMode, setNavMode] = useState(() => {
+    const stored = localStorage.getItem(NAV_MODE_KEY);
+    return stored === "recortado" ? "recortado" : "normal";
+  });
   const [user, setUser] = useState(null);
-  const [breadcrumbExtra, setBreadcrumbExtra] = useState(null);
+  const [breadcrumbItems, setBreadcrumbItems] = useState([]);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,16 +52,26 @@ const MenuUsuario = () => {
   // ======================
   useEffect(() => {
     if (!location.pathname.startsWith("/inventario/")) {
-      setBreadcrumbExtra(null);
+      setBreadcrumbItems([]);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    const syncNavMode = () => {
+      const stored = localStorage.getItem(NAV_MODE_KEY);
+      setNavMode(stored === "recortado" ? "recortado" : "normal");
+    };
+    window.addEventListener("sgi-nav-mode-change", syncNavMode);
+    return () => window.removeEventListener("sgi-nav-mode-change", syncNavMode);
+  }, []);
+
 
   // ======================
   // LOGOUT
   // ======================
   const handleLogout = async () => {
     try {
-      await api.post("/logout", {}, { withCredentials: true });
+      await api.post("/auth/logout", {}, { withCredentials: true });
     } catch (error) {
       console.error("Error cerrando sesión", error);
     } finally {
@@ -70,46 +87,67 @@ const MenuUsuario = () => {
     {
       key: "/",
       icon: <PieChartOutlined />,
-      label: <Link to="/">Dashboard</Link>,
+      label: "Dashboard",
+      colorClass: "is-green",
     },
     {
       key: "/productos",
       icon: <ProductOutlined />,
-      label: <Link to="/productos">Productos</Link>,
+      label: "Productos",
+      colorClass: "is-amber",
     },
     {
       key: "/inventario",
       icon: <BookOutlined />,
-      label: <Link to="/inventario">Inventario</Link>,
-    },
-    {
-      key: "/calendario",
-      icon: <CalendarOutlined />,
-      label: <Link to="/calendario">Calendario</Link>,
+      label: "Inventario",
+      colorClass: "is-purple",
     },
     {
       key: "/pedidos",
       icon: <TruckOutlined />,
-      label: <Link to="/pedidos">Pedidos</Link>,
+      label: "Pedidos",
+      colorClass: "is-slate",
+    },
+    {
+      key: "/clientes",
+      icon: <TeamOutlined />,
+      label: "Clientes",
+      colorClass: "is-blue",
+    },
+    {
+      key: "/calendario",
+      icon: <CalendarOutlined />,
+      label: "Calendario",
+      colorClass: "is-teal",
     },
     ...(user?.rol === "Administrador"
       ? [{
           key: "/usuarios",
           icon: <UsergroupAddOutlined />,
-          label: <Link to="/usuarios">Usuarios</Link>,
+          label: "Usuarios",
+          colorClass: "is-indigo",
         }]
       : []),
     {
       key: "/configuracion",
       icon: <SettingOutlined />,
-      label: <Link to="/configuracion">Configuración</Link>,
+      label: "Configuración",
+      colorClass: "is-slate",
     },
     {
       key: "logout",
-      icon: <LogoutOutlined style={{ color: "red" }} />,
-      label: <span onClick={handleLogout}>Cerrar sesión</span>,
+      icon: <LogoutOutlined />,
+      label: "Cerrar sesión",
+      colorClass: "is-danger",
     },
   ];
+
+  const mainItems = menuItems.filter((item) => item.key !== "logout" && item.key !== "/configuracion");
+  const bottomItems = menuItems.filter((item) => item.key === "/configuracion" || item.key === "logout");
+  const selectedKey = location.pathname.startsWith("/inventario")
+    ? "/inventario"
+    : location.pathname;
+  const isCollapsed = navMode === "recortado";
 
   // ======================
   // BREADCRUMB BASE DINÁMICO
@@ -121,7 +159,8 @@ const MenuUsuario = () => {
     "/pedidos": "Pedidos",
     "/usuarios": "Usuarios",
     "/configuracion": "Configuración",
-    "/calendario": "Calendario"
+    "/calendario": "Calendario",
+    "/clientes": "Clientes"
   };
 
   const basePath = "/" + location.pathname.split("/")[1];
@@ -129,20 +168,79 @@ const MenuUsuario = () => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[
-            location.pathname.startsWith("/inventario")
-              ? "/inventario"
-              : location.pathname
-          ]}
-          items={menuItems}
-        />
+      <Sider
+        width={SIDER_WIDTH}
+        collapsedWidth={SIDER_COLLAPSED_WIDTH}
+        collapsible={false}
+        collapsed={isCollapsed}
+        trigger={null}
+        className="side-nav"
+        style={{
+          overflow: "hidden",
+          height: "100vh",
+          position: "fixed",
+          insetInlineStart: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 1000,
+          background: "transparent",
+        }}
+      >
+        <div className={`side-nav-shell ${isCollapsed ? "is-collapsed" : ""}`}>
+          <div className="side-nav-panel">
+            <div className="side-nav-main">
+              {mainItems.map((item) => {
+                const isActive = selectedKey === item.key;
+                return (
+                  <Link
+                    key={item.key}
+                    to={item.key}
+                    className={`side-nav-item ${isActive ? "is-active" : ""}`}
+                    data-tooltip={isCollapsed ? item.label : undefined}
+                  >
+                    <span className={`side-nav-icon ${item.colorClass}`}>{item.icon}</span>
+                    {!isCollapsed && <span className="side-nav-label">{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="side-nav-footer">
+            {bottomItems.map((item) => {
+              const isActive = selectedKey === item.key;
+              const isLogout = item.key === "logout";
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={`side-nav-item ${isActive ? "is-active" : ""} ${isLogout ? "is-logout" : ""}`}
+                    data-tooltip={isCollapsed ? item.label : undefined}
+                    onClick={() => {
+                      if (isLogout) {
+                        handleLogout();
+                        return;
+                    }
+                    navigate(item.key);
+                  }}
+                >
+                  <span className={`side-nav-icon ${item.colorClass}`}>{item.icon}</span>
+                  {!isCollapsed && (
+                    <span className="side-nav-label">{item.label}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </Sider>
 
-      <Layout>
+      <Layout
+        style={{
+          marginLeft: isCollapsed ? SIDER_COLLAPSED_WIDTH : SIDER_WIDTH,
+          transition: "margin-left 0.2s ease",
+        }}
+      >
         <Content style={{ margin: "0 16px" }}>
           {/* ======================
               BREADCRUMB
@@ -158,9 +256,11 @@ const MenuUsuario = () => {
               </Breadcrumb.Item>
             )}
 
-            {breadcrumbExtra && (
-              <Breadcrumb.Item>{breadcrumbExtra}</Breadcrumb.Item>
-            )}
+            {breadcrumbItems.map((item) => (
+              <Breadcrumb.Item key={item.path || item.title}>
+                {item.path ? <Link to={item.path}>{item.title}</Link> : item.title}
+              </Breadcrumb.Item>
+            ))}
           </Breadcrumb>
 
           <div
@@ -171,7 +271,7 @@ const MenuUsuario = () => {
               borderRadius: borderRadiusLG,
             }}
           >
-            <Outlet context={{ setBreadcrumbExtra }} />
+            <Outlet context={{ setBreadcrumbItems }} />
           </div>
         </Content>
       </Layout>

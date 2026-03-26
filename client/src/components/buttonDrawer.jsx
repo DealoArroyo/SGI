@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Drawer, Form, Input, Row, Select, Space, message } from 'antd';
+import api from "../api";
 
 const ButtonDrawer = ({ onUserAdded }) => {
   const [open, setOpen] = useState(false);
@@ -20,9 +20,7 @@ const ButtonDrawer = ({ onUserAdded }) => {
   useEffect(() => {
     const cargarRoles = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/api/roles", {
-          withCredentials: true
-        });
+        const res = await api.get("/roles");
 
         const rolesFormateados = res.data.map(r => ({
           label: r.nombre,
@@ -42,9 +40,7 @@ const ButtonDrawer = ({ onUserAdded }) => {
   // --- Enviar formulario ---
   const onFinish = async (values) => {
     try {
-      const res = await axios.post("http://localhost:3000/api/usuarios", values, {
-        withCredentials: true
-      });
+      const res = await api.post("/usuarios", values);
 
       const newUser = res.data.usuario;
 

@@ -3,7 +3,12 @@ import pool from "../db.js";
 export const obtenerCategorias = async (req, res) => {
     try {
         const id_inquilino = req.id_inquilino;
-        const { id_area } = req.params.id_area;
+        const { id_area } = req.query;
+
+        if (!id_area) {
+            return res.status(400).json({ error: "id_area es requerido" });
+        }
+
         const result = await pool.query(`
             SELECT
                 id,
@@ -102,8 +107,8 @@ export const eliminarCategoria = async (req, res) => {
         await pool.query(`
             DELETE 
             FROM categorias 
-            WHERE id = $1    
-        `, [id]
+            WHERE id = $1 AND id_inquilino = $2
+        `, [id, id_inquilino]
         );
 
         return res.json({ mensaje: "Categoría eliminada de forma correcta" });

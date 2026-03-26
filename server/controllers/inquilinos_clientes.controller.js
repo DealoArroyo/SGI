@@ -2,10 +2,11 @@ import pool from "../db.js";
 
 export const asociarClienteInquilino = async (req, res) => {
     try {
-        const { id_cliente, id_inquilino } = req.body;
+        const { id_cliente } = req.body;
+        const { id_inquilino } = req.user;
 
         if (!id_cliente || !id_inquilino) {
-            return res.status(400).json({ error: "Falta id_cliente o id_inquilino" });
+            return res.status(400).json({ error: "Falta id_cliente o inquilino autenticado" });
         }
 
         await pool.query(
@@ -22,6 +23,7 @@ export const asociarClienteInquilino = async (req, res) => {
 
 export const obtenerRelaciones = async (req, res) => {
     try {
+        const { id_inquilino } = req.user;
         const result = await pool.query(`
             SELECT
                 ic.id,
@@ -30,8 +32,9 @@ export const obtenerRelaciones = async (req, res) => {
             FROM inquilinos_clientes ic
             JOIN inquilinos i ON ic.id_inquilino = i.id
             JOIN clientes c ON ic.id_cliente = c.id
+            WHERE ic.id_inquilino = $1
             ORDER BY ic.id ASC;
-        `);
+        `, [id_inquilino]);
 
         res.json(result.rows);
     } catch (error) {
@@ -41,7 +44,8 @@ export const obtenerRelaciones = async (req, res) => {
 
 export const eliminarRelacion = async (req, res) => {
     try {
-        const { id_cliente, id_inquilino } = req.body;
+        const { id_cliente } = req.body;
+        const { id_inquilino } = req.user;
 
         const result = await pool.query(
             `DELETE FROM inquilinos_clientes

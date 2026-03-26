@@ -32,7 +32,15 @@ const ButtonDelete = ({ id, onDelete, resource, label }) => {
             okText="Sí"
             cancelText="No"
         >
-            <Button danger shape="circle" type="primary" icon={<DeleteOutlined />} />
+            <Button
+              danger
+              shape="circle"
+              type="text"
+              size="small"
+              className="inventory-card-delete-btn"
+              icon={<DeleteOutlined />}
+              aria-label={`Eliminar ${label}`}
+            />
         </Popconfirm>
     </div>
   )

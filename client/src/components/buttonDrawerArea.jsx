@@ -1,15 +1,11 @@
-import axios from "axios";
 import { Col, Form, Input, Row } from "antd";
 import Color from "./colorPicker";
 import ButtonDrawerForm from "./buttonDrawerForm.jsx";
+import api from "../api";
 
 const ButtonDrawerArea = ({ onAreaAdded }) => {
   const handleSubmit = async (values) => {
-    const res = await axios.post(
-      "http://localhost:3000/api/areas",
-      values,
-      { withCredentials: true }
-    );
+    const res = await api.post("/areas", values);
 
     onAreaAdded(res.data.area);
   };

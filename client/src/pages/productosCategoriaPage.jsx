@@ -13,11 +13,10 @@ import Highlighter from "react-highlight-words";
 export default function PaginaDetalle() {
   const { areaId, categoriaId } = useParams();
   const [productos, setProductos] = useState([]);
-  const [unidades, setUnidades] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState("");
   const outletContext = useOutletContext();
-  const setBreadcrumbExtra = outletContext?.setBreadcrumbExtra;
+  const setBreadcrumbItems = outletContext?.setBreadcrumbItems;
   const searchInput = useRef(null);
 
   // ======================
@@ -31,16 +30,18 @@ export default function PaginaDetalle() {
           api.get(`/categorias/${categoriaId}`, { withCredentials: true })
         ]);
 
-        setBreadcrumbExtra?.(
-          `${areaRes.data.nombre} / ${categoriaRes.data.nombre}`
-        );
+        setBreadcrumbItems?.([
+          { title: areaRes.data.nombre, path: `/inventario/${areaId}` },
+          { title: categoriaRes.data.nombre, path: `/inventario/${areaId}/${categoriaId}` },
+        ]);
       } catch (err) {
         console.error(err);
       }
     };
 
     if (areaId && categoriaId) fetchBreadcrumb();
-  }, [areaId, categoriaId, setBreadcrumbExtra]);
+    return () => setBreadcrumbItems?.([]);
+  }, [areaId, categoriaId, setBreadcrumbItems]);
 
   /* ====================
       FETCHS
@@ -55,18 +56,9 @@ export default function PaginaDetalle() {
       setProductos(res.data);
     };
 
-    const fetchUnidades = async () => {
-      const res = await api.get(
-        "/unidades-medida",
-        { withCredentials: true }
-      );
-      setUnidades(res.data);
-    };
-
     if (categoriaId) {
       fetchProductos();
     }
-    fetchUnidades();
   }, [categoriaId]);
 
   /* ====================

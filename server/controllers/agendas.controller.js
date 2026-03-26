@@ -73,3 +73,44 @@ export const eliminarAgenda = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+
+export const actualizarAgenda = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { titulo, fecha } = req.body;
+        const id_inquilino = req.id_inquilino;
+
+        const agenda = await pool.query(`
+            SELECT
+            id,
+            id_inquilino
+            FROM agendas
+            WHERE id = $1 AND id_inquilino = $2
+        `, [id, id_inquilino]
+        );
+
+        if (agenda.rows.length === 0) {
+            return res.status(404).json({ error: "Agenda no encontrada" });
+        }
+
+        const actualizada = await pool.query(`
+            UPDATE agendas
+            SET titulo = $1,
+                fecha = $2
+            WHERE id = $3 AND id_inquilino = $4
+            RETURNING
+                id,
+                titulo,
+                fecha
+        `, [titulo, fecha, id, id_inquilino]
+        );
+
+        return res.json({
+            mensaje: "Agenda actualizada correctamente",
+            agenda: actualizada.rows[0]
+        });
+    } catch (error) {
+        console.error("Error al actualizar la agenda", error);
+        res.status(500).json({ error: error.message });
+    }
+}

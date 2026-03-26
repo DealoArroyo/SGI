@@ -1,208 +1,207 @@
-import { useState, useEffect, useRef } from "react";
-import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  message,
-  Table,
-  Divider,
-  Input,
-  Space,
   Button,
+  Cascader,
+  Col,
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  message,
   Popconfirm,
   Row,
-  Col,
-  Form,
-  Select
+  Select,
+  Space,
+  Table,
 } from "antd";
-import Highlighter from "react-highlight-words";
 import api from "../api";
 import ButtonDrawerForm from "../components/buttonDrawerForm";
 import { formatMoney } from "../components/helperMoney";
 
-const { Option } = Select;
+const getCategoryOptions = (areas = [], categoriesByArea = {}) => {
+  return areas
+    .filter((area) => area?.id)
+    .map((area) => {
+      const categories = categoriesByArea[area.id] || [];
+
+      return {
+        value: area.id,
+        label: area.nombre,
+        children: categories
+          .filter((cat) => cat?.id)
+          .map((cat) => ({
+            value: cat.id,
+            label: cat.nombre,
+          })),
+      };
+    })
+    .filter((option) => option.children.length > 0);
+};
 
 export default function Productos() {
   const [productos, setProductos] = useState([]);
-  const [categorias, setCategorias] = useState([]);
-  const [areas, setAreas] = useState([]);
   const [unidades, setUnidades] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-  const [searchText, setSearchText] = useState("");
-  const [searchedColumn, setSearchedColumn] = useState("");
-  const searchInput = useRef(null);
 
-  /* =========================
-     Mensajes
-  ========================= */
-  const success = () =>
-    messageApi.success("Producto agregado correctamente");
-
-  const warning = () =>
-    messageApi.error("El producto no se pudo agregar");
-
-  /* =========================
-     Fetchs
-  ========================= */
-  const fetchProductos = async () => {
-    const res = await api.get("/productos/inquilino", {
-      withCredentials: true
-    });
-    setProductos(res.data);
-  };
-
-  const fetchAreas = async () => {
-    const res = await api.get("/areas", {
-      withCredentials: true
-    });
-    console.log("Áreas recibidas:", res.data);
-    setAreas(res.data);
-  }
-
-  const handleAreaChange = async (areaId) => {
+  const fetchProductos = useCallback(async () => {
+    setLoading(true);
     try {
-        const res = await api.get(`/categorias/area/${areaId}`, {
-            withCredentials: true
-        });
-        setCategorias(res.data);
+      const res = await api.get("/productos/inquilino", {
+        withCredentials: true,
+      });
+      setProductos(res.data || []);
     } catch (error) {
-        console.error('Error al filtrar categorías', error);
+      console.error(error);
+      messageApi.error("No se pudieron cargar los productos");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [messageApi]);
 
-  const fetchUnidades = async () => {
-    const res = await api.get("/unidades-medida", {
-      withCredentials: true
-    });
-    console.log("Unidades recibidas:", res.data);
-    setUnidades(res.data);
-  };
+  const fetchFormOptions = useCallback(async () => {
+    try {
+      const [areasRes, unidadesRes] = await Promise.all([
+        api.get("/areas", { withCredentials: true }),
+        api.get("/unidades-medida", { withCredentials: true }),
+      ]);
+
+      const areas = areasRes.data || [];
+      setUnidades(unidadesRes.data || []);
+
+      const categoriesRequests = areas
+        .filter((area) => area?.id)
+        .map(async (area) => {
+          const res = await api.get(`/categorias/area/${area.id}`, {
+            withCredentials: true,
+          });
+
+          return { areaId: area.id, categories: res.data || [] };
+        });
+
+      const categoriesResults = await Promise.all(categoriesRequests);
+      const categoriesByArea = categoriesResults.reduce((acc, current) => {
+        acc[current.areaId] = current.categories;
+        return acc;
+      }, {});
+
+      setCategoryOptions(getCategoryOptions(areas, categoriesByArea));
+    } catch (error) {
+      console.error(error);
+      messageApi.error("No se pudieron cargar áreas, categorías o unidades");
+    }
+  }, [messageApi]);
 
   useEffect(() => {
     fetchProductos();
-    fetchUnidades();
-    fetchAreas();
-  }, []);
+    fetchFormOptions();
+  }, [fetchFormOptions, fetchProductos]);
 
-  /* =========================
-     Eliminar
-  ========================= */
   const handleProductDeleted = async (id) => {
     try {
       await api.delete(`/productos/${id}`, {
-        withCredentials: true
+        withCredentials: true,
       });
-      await fetchProductos();
-      message.success("Producto eliminado");
+      setProductos((prev) => prev.filter((product) => product.id !== id));
+      messageApi.success("Producto eliminado");
     } catch (error) {
       console.error(error);
-      message.error("Error al eliminar el producto");
+      messageApi.error("Error al eliminar el producto");
     }
   };
 
-  /* =========================
-     Buscador
-  ========================= */
-  const handleSearch = (selectedKeys, confirm, dataIndex) => {
-    confirm();
-    setSearchText(selectedKeys[0]);
-    setSearchedColumn(dataIndex);
+  const handleDeleteAllProducts = async () => {
+    if (productos.length === 0) {
+      messageApi.info("No hay productos para eliminar");
+      return;
+    }
+
+    setDeletingAll(true);
+    try {
+      await Promise.all(
+        productos.map((product) =>
+          api.delete(`/productos/${product.id}`, {
+            withCredentials: true,
+          })
+        )
+      );
+
+      setProductos([]);
+      messageApi.success("Todos los productos fueron eliminados");
+    } catch (error) {
+      console.error(error);
+      messageApi.error(
+        "No fue posible eliminar todos los productos. Revisa permisos e intenta de nuevo"
+      );
+      await fetchProductos();
+    } finally {
+      setDeletingAll(false);
+    }
   };
 
-  const getColumnSearchProps = (dataIndex) => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, close }) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          ref={searchInput}
-          placeholder={`Buscar ${dataIndex}`}
-          value={selectedKeys[0]}
-          onChange={(e) =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])
-          }
-          onPressEnter={() =>
-            handleSearch(selectedKeys, confirm, dataIndex)
-          }
-          style={{ marginBottom: 8 }}
-        />
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<SearchOutlined />}
-            onClick={() =>
-              handleSearch(selectedKeys, confirm, dataIndex)
-            }
-          >
-            Buscar
-          </Button>
-          <Button size="small" onClick={close}>
-            Cancelar
-          </Button>
-        </Space>
-      </div>
-    ),
-    filterIcon: (filtered) => (
-      <SearchOutlined
-        style={{ color: filtered ? "#1677ff" : undefined }}
-      />
-    ),
-    onFilter: (value, record) =>
-      record[dataIndex]
-        ?.toString()
-        .toLowerCase()
-        .includes(value.toLowerCase()),
-    render: (text) =>
-      searchedColumn === dataIndex ? (
-        <Highlighter
-          highlightStyle={{ backgroundColor: "#ffc069", padding: 0 }}
-          searchWords={[searchText]}
-          autoEscape
-          textToHighlight={text?.toString() || ""}
-        />
-      ) : (
-        text
-      )
-  });
+  const filteredProducts = useMemo(() => {
+    const term = searchValue.trim().toLowerCase();
 
-  /* =========================
-     Columnas
-  ========================= */
+    if (!term) {
+      return productos;
+    }
+
+    return productos.filter((product) => {
+      return [
+        product.sku,
+        product.nombre,
+        product.area,
+        product.categoria,
+        product.unidad_medida,
+      ]
+        .filter(Boolean)
+        .some((value) => value.toString().toLowerCase().includes(term));
+    });
+  }, [productos, searchValue]);
+
   const columns = [
+    {
+      title: "SKU",
+      dataIndex: "sku",
+    },
     {
       title: "Nombre",
       dataIndex: "nombre",
-      ...getColumnSearchProps("nombre")
     },
     {
       title: "Cantidad",
-      dataIndex: "cantidad"
+      dataIndex: "cantidad",
     },
     {
-      title: "Unidad de medida",
+      title: "Unidad",
       dataIndex: "unidad_medida",
     },
     {
       title: "Categoría",
       dataIndex: "categoria",
-      ...getColumnSearchProps("categoria")
     },
     {
       title: "Área",
       dataIndex: "area",
-      ...getColumnSearchProps("area")
     },
     {
       title: "Costo",
       dataIndex: "costo_producto",
-      render: formatMoney
+      render: formatMoney,
     },
     {
-      title: "Precio de venta",
+      title: "Venta",
       dataIndex: "precio_venta",
-      render: formatMoney
+      render: formatMoney,
     },
     {
       title: "Ganancia",
       dataIndex: "ganancia",
-      render: formatMoney
+      render: formatMoney,
     },
     {
       title: "Acciones",
@@ -213,154 +212,168 @@ export default function Productos() {
         >
           <Button danger>Eliminar</Button>
         </Popconfirm>
-      )
-    }
+      ),
+    },
   ];
 
-  /* =========================
-     Render
-  ========================= */
   return (
     <div>
       {contextHolder}
 
-      <ButtonDrawerForm
-        buttonText="Agregar producto"
-        drawerTitle="Nuevo producto"
-        submitText="Crear"
-        onSubmit={async (values) => {
-          try {
-            await api.post("/productos", values, {
-              withCredentials: true
-            });
-            await fetchProductos(); // 🔥 CLAVE
-            success();
-          } catch (error) {
-            console.error(error);
-            warning();
-          }
-        }}
-      >
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              name="nombre"
-              label="Nombre"
-              rules={[{ required: true }]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
+      <Space wrap>
+        <ButtonDrawerForm
+          buttonText="Agregar producto"
+          drawerTitle="Nuevo producto"
+          submitText={submitting ? "Guardando..." : "Crear"}
+          onSubmit={async (values) => {
+            const categoriaPath = values?.categoria_path || [];
+            const id_categoria = categoriaPath[1];
 
-          <Col span={8}>
-            <Form.Item
-              name="cantidad"
-              label="Cantidad"
-              rules={[{ required: true }]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
+            if (!id_categoria) {
+              messageApi.error("Selecciona una categoría");
+              throw new Error("Categoria no seleccionada");
+            }
 
-          <Col span={8}>
-            <Form.Item
-              name="precio_venta"
-              label="Precio de Venta"
-              rules={[{ required: true }]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-        </Row>
+            const payload = {
+              nombre: values.nombre,
+              cantidad: values.cantidad,
+              precio_venta: values.precio_venta,
+              costo_producto: values.costo_producto,
+              id_unidad_medida: values.id_unidad_medida,
+              id_categoria,
+              detalles: values.detalles || "",
+            };
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="costo_producto"
-              label="Costo"
-              rules={[{ required: true }]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item
-              name="id_unidad_medida"
-              label="Unidad de Medida"
-              rules={[{ required: true }]}
-            >
-              <Select placeholder="Selecciona unidad">
-                {unidades.map((um) => (
-                    <Select.Option key={um.id} value={um.id}>
-                    {um.descripcion}
-                    </Select.Option>
-                ))}
-                </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="id_area"
-              label="Área"
-              rules={[{ required: true }]}
-            >
-              <Select 
-              placeholder="Selecciona área"
-              onChange={handleAreaChange}
+            setSubmitting(true);
+            try {
+              await api.post("/productos", payload, {
+                withCredentials: true,
+              });
+              await fetchProductos();
+              messageApi.success("Producto guardado correctamente");
+            } catch (error) {
+              console.error(error);
+              messageApi.error("El producto no se pudo guardar");
+              throw error;
+            } finally {
+              setSubmitting(false);
+            }
+          }}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="nombre"
+                label="Nombre"
+                rules={[{ required: true, message: "Captura el nombre" }]}
               >
-                {areas
-                    .filter(area => area.id)
-                    .map((area) => (
-                    <Select.Option key={area.id} value={area.id}>
-                        {area.nombre}
-                    </Select.Option>
-                    ))
-                }
-                </Select>
-            </Form.Item>
-          </Col>
+                <Input placeholder="Ej. Café molido" />
+              </Form.Item>
+            </Col>
 
-          <Col span={12}>
-            <Form.Item
-              name="id_categoria"
-              label="Categoría"
-              rules={[{ required: true }]}
-            >
-              <Select placeholder="Selecciona categoría">
-                {categorias
-                    .filter(cat => cat.id !== null && cat.id !== undefined)
-                    .map((cat) => (
-                    <Select.Option key={cat.id} value={cat.id}>
-                        {cat.nombre}
-                    </Select.Option>
-                    ))
-                }
-                </Select>
-            </Form.Item>
-          </Col>
-        </Row>
+            <Col span={12}>
+              <Form.Item
+                name="categoria_path"
+                label="Categoría"
+                rules={[{ required: true, message: "Selecciona una categoría" }]}
+              >
+                <Cascader
+                  options={categoryOptions}
+                  placeholder="Selecciona área y categoría"
+                  showSearch
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Form.Item
-                name="detalles"
-                label="Detalles"
-                rules={[{ required: true }]}
-                >
-                <Input />
-        </Form.Item>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
+                name="cantidad"
+                label="Cantidad"
+                rules={[{ required: true, message: "Captura la cantidad" }]}
+              >
+                <InputNumber min={1} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
 
-      </ButtonDrawerForm>
+            <Col span={8}>
+              <Form.Item
+                name="costo_producto"
+                label="Costo"
+                rules={[{ required: true, message: "Captura el costo" }]}
+              >
+                <InputNumber min={0} step={0.01} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+
+            <Col span={8}>
+              <Form.Item
+                name="precio_venta"
+                label="Precio de venta"
+                rules={[{ required: true, message: "Captura el precio de venta" }]}
+              >
+                <InputNumber min={0} step={0.01} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="id_unidad_medida"
+                label="Unidad de medida"
+                rules={[{ required: true, message: "Selecciona una unidad" }]}
+              >
+                <Select
+                  placeholder="Selecciona unidad"
+                  options={unidades.map((um) => ({
+                    label: um.descripcion,
+                    value: um.id,
+                  }))}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item name="detalles" label="Detalles (opcional)">
+                <Input placeholder="Notas del producto" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </ButtonDrawerForm>
+
+        <Popconfirm
+          title="¿Eliminar todos los productos?"
+          description="Esta acción no se puede deshacer"
+          onConfirm={handleDeleteAllProducts}
+          okText="Sí, eliminar"
+          cancelText="Cancelar"
+        >
+          <Button danger loading={deletingAll}>
+            Eliminar todos
+          </Button>
+        </Popconfirm>
+      </Space>
+
+      <Divider />
+
+      <Input
+        allowClear
+        value={searchValue}
+        onChange={(event) => setSearchValue(event.target.value)}
+        placeholder="Buscar por SKU, nombre, área, categoría o unidad"
+      />
 
       <Divider />
 
       <Table
+        loading={loading}
         columns={columns}
-        dataSource={productos}
+        dataSource={filteredProducts}
         rowKey="id"
-        scroll={{ x: "max-content", y: 400 }}
+        pagination={{ pageSize: 10, showSizeChanger: false }}
+        scroll={{ x: "max-content", y: 420 }}
       />
     </div>
   );

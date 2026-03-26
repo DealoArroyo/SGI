@@ -3,14 +3,16 @@ import bcrypt from "bcrypt";
 
 export const obtenerInquilinos = async (req, res) => {
     try{
+        const id_inquilino = req.id_inquilino;
         const result = await pool.query(`
             SELECT
                 i.id AS inquilino_id,
                 i.nombre AS inquilino_nombre,
                 i.correo AS inquilino_correo,
                 i.tiempo AS inquilino_tiempo
-            FROM inquilinos i;
-        `);
+            FROM inquilinos i
+            WHERE i.id = $1;
+        `, [id_inquilino]);
 
         res.json(result.rows);
     } catch (error) {
